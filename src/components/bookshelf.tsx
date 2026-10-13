@@ -2,9 +2,9 @@ import type { LibraryArtist } from "@/lib/library";
 import { AlbumCover } from "@/components/album-cover";
 
 function artistHref(artist: LibraryArtist) {
-  return artist.albums.length > 1
-    ? `/artist/${artist.id}`
-    : `/album/${artist.coverAlbum.id}`;
+  if (artist.albums.length > 1) return `/artist/${artist.id}`;
+  const collectionId = artist.coverAlbum.itunesCollectionId;
+  return collectionId ? `/album/itunes-${collectionId}` : `/album/${artist.coverAlbum.id}`;
 }
 
 function artistSubtitle(artist: LibraryArtist) {

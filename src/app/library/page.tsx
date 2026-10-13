@@ -15,7 +15,7 @@ export default async function LibraryPage() {
     redirect("/");
   }
 
-  const artists = getLibrary(session.userId);
+  const artists = await getLibrary(session.userId);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">

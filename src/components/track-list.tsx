@@ -23,10 +23,12 @@ export function TrackList({
   tracks,
   artistName,
   artworkUrl,
+  collectionId,
 }: {
   tracks: TrackRow[];
   artistName: string;
   artworkUrl: string | null;
+  collectionId?: string | null;
 }) {
   const [activeTrack, setActiveTrack] = useState<TrackRow | null>(null);
 
@@ -34,7 +36,11 @@ export function TrackList({
     <>
       <ol className="overflow-hidden rounded-xl ring-1 ring-white/10">
         {tracks.map((track) => {
-          const tabHref = track.tabId ? `/tab/${track.tabId}` : null;
+          const tabHref = collectionId
+            ? `/tab/itunes-${collectionId}-${track.trackNumber}`
+            : track.tabId
+              ? `/tab/${track.tabId}`
+              : null;
           return (
             <li
               key={track.id}

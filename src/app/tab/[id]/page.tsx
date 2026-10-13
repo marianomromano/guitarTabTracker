@@ -20,7 +20,7 @@ export default async function TabPage({
 }) {
   const { id } = await params;
   const userId = await requireUserId();
-  const tab = getTabForUser(id, userId);
+  const tab = await getTabForUser(id, userId);
 
   if (!tab) {
     notFound();
@@ -31,7 +31,9 @@ export default async function TabPage({
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6">
       <Link
-        href={`/album/${tab.albumId}`}
+        href={
+          tab.itunesCollectionId ? `/album/itunes-${tab.itunesCollectionId}` : `/album/${tab.albumId}`
+        }
         className="mb-4 inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" />

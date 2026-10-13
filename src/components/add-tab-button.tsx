@@ -32,7 +32,7 @@ export function AddTabButton({ song }: { song: ItunesSongOption }) {
 
       if (result.ok) {
         setAlbums(null);
-        router.push(`/tab/${result.tabId}`);
+        router.push(result.tabHref);
         router.refresh();
         return;
       }

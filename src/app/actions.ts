@@ -28,11 +28,14 @@ import {
   type ItunesSongOption,
 } from "@/lib/itunes";
 import { isAlphaTexFile, isTabFile, placeholderAlphaTex } from "@/lib/alphatex";
+import { ensureItunesAlbum, ensureUserTab } from "@/lib/hydrate";
+import { itunesAlbumId, itunesTabPath, parseItunesAlbumId } from "@/lib/ids";
+import { rememberShelfAlbum } from "@/lib/shelf";
 import { parseSoundsliceHash } from "@/lib/soundslice";
 import { revalidatePath } from "next/cache";
 
 export type AddTabResult =
-  | { ok: true; albumId: string; tabId: string }
+  | { ok: true; albumId: string; tabId: string; tabHref: string }
   | { ok: false; needsAlbumPick: true; albums: ItunesAlbumOption[] }
   | { ok: false; error: string };
 
@@ -144,103 +147,32 @@ async function addTab(input: {
     };
   }
 
-  const db = getDb();
-  const artistId = crypto.randomUUID();
-  const albumId = crypto.randomUUID();
-
-  const existingArtist = db
-    .select()
-    .from(artists)
-    .where(eq(artists.name, lookup.album.artistName))
-    .get();
-
-  const savedArtist =
-    existingArtist ??
-    db
-      .insert(artists)
-      .values({
-        id: artistId,
-        name: lookup.album.artistName,
-        itunesArtistId: lookup.artistId ? String(lookup.artistId) : null,
-      })
-      .returning()
-      .get();
-
-  const existingAlbum = lookup.album.collectionId
-    ? db
-        .select()
-        .from(albums)
-        .where(eq(albums.itunesCollectionId, String(lookup.album.collectionId)))
-        .get()
-    : undefined;
-
-  const savedAlbum =
-    existingAlbum ??
-    db
-      .insert(albums)
-      .values({
-        id: albumId,
-        artistId: savedArtist.id,
-        title: lookup.album.collectionName,
-        itunesCollectionId: String(lookup.album.collectionId),
-        artworkUrl: lookup.album.artworkUrl,
-        releaseYear: lookup.album.releaseYear,
-      })
-      .returning()
-      .get();
-
-  const existingTracks = db
-    .select()
-    .from(tracks)
-    .where(eq(tracks.albumId, savedAlbum.id))
-    .all();
-
-  if (existingTracks.length === 0) {
-    db.insert(tracks)
-      .values(
-        lookup.tracks.map((track) => ({
-          id: crypto.randomUUID(),
-          albumId: savedAlbum.id,
-          title: track.trackName,
-          trackNumber: track.trackNumber || lookup.tracks.indexOf(track) + 1,
-          previewUrl: track.previewUrl,
-          appleMusicId: track.appleMusicId,
-        })),
-      )
-      .run();
-  } else {
-    applyPreviewUrls(savedAlbum.id, lookup.tracks);
+  const hydrated = await ensureItunesAlbum(collectionId, userId);
+  if (!hydrated) {
+    return { ok: false, error: "Could not save that album. Try again." };
   }
 
-  const albumTracks = db
-    .select()
-    .from(tracks)
-    .where(eq(tracks.albumId, savedAlbum.id))
-    .all();
+  applyPreviewUrls(hydrated.album.id, lookup.tracks);
 
-  const dbTrack = albumTracks.find((track) =>
+  const dbTrack = hydrated.tracks.find((track) =>
     titlesMatch(track.title, matchedTrack.trackName),
   );
   if (!dbTrack) {
     return { ok: false, error: "Saved the album but could not attach the tab to a track." };
   }
 
-  const existingTab = db
-    .select()
-    .from(tabs)
-    .where(and(eq(tabs.userId, userId), eq(tabs.trackId, dbTrack.id)))
-    .get();
+  const savedTab = ensureUserTab(userId, dbTrack.id, dbTrack.title, lookup.album.artistName);
+  await rememberShelfAlbum(collectionId);
 
-  const tabId =
-    existingTab?.id ??
-    insertPlaceholderTab(userId, dbTrack.id, dbTrack.title, lookup.album.artistName);
-
-  await linkMissingAlbumTabs(userId, savedAlbum.id, lookup.album.artistName);
+  const albumHrefId = hydrated.album.itunesCollectionId
+    ? itunesAlbumId(Number(hydrated.album.itunesCollectionId))
+    : hydrated.album.id;
+  const tabHref = itunesTabPath(collectionId, dbTrack.trackNumber);
 
   revalidatePath("/");
-  revalidatePath(`/album/${savedAlbum.id}`);
-  revalidatePath(`/tab/${tabId}`);
-  return { ok: true, albumId: savedAlbum.id, tabId };
+  revalidatePath(`/album/${albumHrefId}`);
+  revalidatePath(tabHref);
+  return { ok: true, albumId: albumHrefId, tabId: savedTab.id, tabHref };
 }
 
 export async function searchTabsAction(query: string): Promise<ItunesSongOption[]> {
@@ -398,14 +330,26 @@ async function removeTab(tabId: string) {
 export async function syncAlbumPreviewsAction(albumId: string) {
   await requireUserId();
   const db = getDb();
-  const album = db
-    .select({
-      id: albums.id,
-      itunesCollectionId: albums.itunesCollectionId,
-    })
-    .from(albums)
-    .where(eq(albums.id, albumId))
-    .get();
+  const collectionId = parseItunesAlbumId(albumId);
+  const album =
+    db
+      .select({
+        id: albums.id,
+        itunesCollectionId: albums.itunesCollectionId,
+      })
+      .from(albums)
+      .where(eq(albums.id, albumId))
+      .get() ??
+    (collectionId
+      ? db
+          .select({
+            id: albums.id,
+            itunesCollectionId: albums.itunesCollectionId,
+          })
+          .from(albums)
+          .where(eq(albums.itunesCollectionId, String(collectionId)))
+          .get()
+      : undefined);
 
   if (!album?.itunesCollectionId) return;
 
@@ -550,28 +494,11 @@ async function linkMissingAlbumTabs(userId: string, albumId: string, artistName:
       .where(and(eq(tabs.userId, userId), eq(tabs.trackId, track.id)))
       .get();
     if (existing) return;
-    insertPlaceholderTab(userId, track.id, track.title, artistName);
+    ensureUserTab(userId, track.id, track.title, artistName);
     linked += 1;
   });
 
   return linked;
-}
-
-function insertPlaceholderTab(userId: string, trackId: string, title: string, artistName: string) {
-  const db = getDb();
-  const id = crypto.randomUUID();
-  db.insert(tabs)
-    .values({
-      id,
-      userId,
-      trackId,
-      songsterrId: 0,
-      songsterrUrl: "",
-      tabTex: placeholderAlphaTex(title, artistName),
-      createdAt: new Date().toISOString(),
-    })
-    .run();
-  return id;
 }
 
 async function mapPool<T>(items: T[], limit: number, work: (item: T) => Promise<void>) {

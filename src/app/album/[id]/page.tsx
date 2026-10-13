@@ -19,7 +19,7 @@ export default async function AlbumPage({
   const { id } = await params;
   const userId = await requireUserId();
   await syncAlbumPreviewsAction(id);
-  const data = getAlbumWithTracks(id, userId);
+  const data = await getAlbumWithTracks(id, userId);
 
   if (!data) {
     notFound();
@@ -27,7 +27,7 @@ export default async function AlbumPage({
 
   const { album, tracks } = data;
   const savedCount = tracks.filter((track) => track.tabId).length;
-  const artist = getArtistLibrary(album.artistId, userId);
+  const artist = await getArtistLibrary(album.artistId, userId);
   const backHref =
     artist && artist.albums.length > 1 ? `/artist/${artist.id}` : "/library";
   const backLabel =
@@ -71,6 +71,7 @@ export default async function AlbumPage({
           tracks={tracks}
           artistName={album.artistName}
           artworkUrl={album.artworkUrl}
+          collectionId={album.itunesCollectionId}
         />
         <AutoFillTabs
           albumId={album.id}

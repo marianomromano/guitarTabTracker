@@ -14,7 +14,7 @@ export default async function ArtistPage({
 }) {
   const { id } = await params;
   const userId = await requireUserId();
-  const artist = getArtistLibrary(id, userId);
+  const artist = await getArtistLibrary(id, userId);
 
   if (!artist) {
     notFound();
