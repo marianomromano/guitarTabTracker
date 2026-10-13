@@ -67,6 +67,10 @@ export function claimDemoTabs(signedInUserId: string, demoUserId: string) {
         trackId: tab.trackId,
         songsterrId: tab.songsterrId,
         songsterrUrl: tab.songsterrUrl,
+        tabTex: tab.tabTex,
+        tabFile: tab.tabFile,
+        tabFilename: tab.tabFilename,
+        soundsliceHash: tab.soundsliceHash,
         createdAt: tab.createdAt,
       })
       .run();

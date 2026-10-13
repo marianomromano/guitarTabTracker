@@ -13,10 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { ItunesAlbumOption } from "@/lib/itunes";
-import type { SongsterrSong } from "@/lib/songsterr";
+import type { ItunesAlbumOption, ItunesSongOption } from "@/lib/itunes";
 
-export function AddTabButton({ song }: { song: SongsterrSong }) {
+export function AddTabButton({ song }: { song: ItunesSongOption }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -26,15 +25,14 @@ export function AddTabButton({ song }: { song: SongsterrSong }) {
     setError(null);
     startTransition(async () => {
       const result = await addTabAction({
-        songsterrId: song.id,
-        songsterrTitle: song.title,
-        songsterrArtist: song.artist,
-        collectionId,
+        title: song.trackName,
+        artist: song.artistName,
+        collectionId: collectionId ?? song.collectionId,
       });
 
       if (result.ok) {
         setAlbums(null);
-        router.push(`/album/${result.albumId}`);
+        router.push(`/tab/${result.tabId}`);
         router.refresh();
         return;
       }
@@ -65,7 +63,7 @@ export function AddTabButton({ song }: { song: SongsterrSong }) {
           <DialogHeader>
             <DialogTitle>Choose an album</DialogTitle>
             <DialogDescription>
-              Multiple albums include {song.title}. Pick the one that belongs on your shelf.
+              Multiple albums include {song.trackName}. Pick the one that belongs on your shelf.
             </DialogDescription>
           </DialogHeader>
           <div className="grid max-h-[60vh] gap-2 overflow-y-auto">

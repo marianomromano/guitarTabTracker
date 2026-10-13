@@ -22,19 +22,17 @@ import {
   lookupItunesAlbum,
   searchItunesAlbums,
   searchItunesSong,
+  searchItunesSongs,
   titlesMatch,
   type ItunesAlbumOption,
+  type ItunesSongOption,
 } from "@/lib/itunes";
-import {
-  findSongsterrTab,
-  searchSongsterr,
-  songsterrViewUrl,
-  type SongsterrSong,
-} from "@/lib/songsterr";
+import { isAlphaTexFile, isTabFile, placeholderAlphaTex } from "@/lib/alphatex";
+import { parseSoundsliceHash } from "@/lib/soundslice";
 import { revalidatePath } from "next/cache";
 
 export type AddTabResult =
-  | { ok: true; albumId: string }
+  | { ok: true; albumId: string; tabId: string }
   | { ok: false; needsAlbumPick: true; albums: ItunesAlbumOption[] }
   | { ok: false; error: string };
 
@@ -90,9 +88,8 @@ export async function claimDemoLibraryAction() {
 }
 
 export async function addTabAction(input: {
-  songsterrId: number;
-  songsterrTitle: string;
-  songsterrArtist: string;
+  title: string;
+  artist: string;
   collectionId?: number;
 }): Promise<AddTabResult> {
   try {
@@ -103,14 +100,13 @@ export async function addTabAction(input: {
 }
 
 async function addTab(input: {
-  songsterrId: number;
-  songsterrTitle: string;
-  songsterrArtist: string;
+  title: string;
+  artist: string;
   collectionId?: number;
 }): Promise<AddTabResult> {
   const userId = await requireUserId();
-  const artistName = input.songsterrArtist.trim();
-  const title = input.songsterrTitle.trim();
+  const artistName = input.artist.trim();
+  const title = input.title.trim();
 
   let collectionId = input.collectionId;
   if (!collectionId) {
@@ -235,63 +231,102 @@ async function addTab(input: {
     .where(and(eq(tabs.userId, userId), eq(tabs.trackId, dbTrack.id)))
     .get();
 
-  if (existingTab) {
-    db.update(tabs)
-      .set({
-        songsterrId: input.songsterrId,
-        songsterrUrl: songsterrViewUrl(input.songsterrId),
-      })
-      .where(eq(tabs.id, existingTab.id))
-      .run();
-  } else {
-    db.insert(tabs)
-      .values({
-        id: crypto.randomUUID(),
-        userId,
-        trackId: dbTrack.id,
-        songsterrId: input.songsterrId,
-        songsterrUrl: songsterrViewUrl(input.songsterrId),
-        createdAt: new Date().toISOString(),
-      })
-      .run();
-  }
+  const tabId =
+    existingTab?.id ??
+    insertPlaceholderTab(userId, dbTrack.id, dbTrack.title, lookup.album.artistName);
 
   await linkMissingAlbumTabs(userId, savedAlbum.id, lookup.album.artistName);
 
   revalidatePath("/");
   revalidatePath(`/album/${savedAlbum.id}`);
-  return { ok: true, albumId: savedAlbum.id };
+  revalidatePath(`/tab/${tabId}`);
+  return { ok: true, albumId: savedAlbum.id, tabId };
 }
 
-export async function searchTabsAction(query: string): Promise<SongsterrSong[]> {
-  return searchSongsterr(query);
+export async function searchTabsAction(query: string): Promise<ItunesSongOption[]> {
+  return searchItunesSongs(query);
 }
 
-export async function linkTabToTrackAction(input: {
+export async function attachSoundsliceAction(input: {
   trackId: string;
-  songsterrId: number;
+  url: string;
 }): Promise<{ ok: true; tabId: string } | { ok: false; error: string }> {
   try {
-    return await linkTabToTrack(input);
+    const hash = parseSoundsliceHash(input.url);
+    if (!hash) {
+      return { ok: false, error: "Paste a Soundslice slice URL or hash." };
+    }
+    return await upsertTrackTab(input.trackId, {
+      soundsliceHash: hash,
+      tabTex: null,
+      tabFile: null,
+      tabFilename: null,
+    });
   } catch (error) {
-    return saveFailed(error, "Could not link that tab. Try again.");
+    return saveFailed(error, "Could not attach that Soundslice tab.");
   }
 }
 
-async function linkTabToTrack(input: {
-  trackId: string;
-  songsterrId: number;
-}): Promise<{ ok: true; tabId: string } | { ok: false; error: string }> {
+export async function uploadTabFileAction(
+  formData: FormData,
+): Promise<{ ok: true; tabId: string } | { ok: false; error: string }> {
+  try {
+    const trackId = String(formData.get("trackId") ?? "");
+    const file = formData.get("file");
+    if (!trackId || !(file instanceof File) || file.size === 0) {
+      return { ok: false, error: "Choose a Guitar Pro, MusicXML, or alphaTex file." };
+    }
+    if (file.size > 2_000_000) {
+      return { ok: false, error: "That file is larger than 2 MB." };
+    }
+    if (!isTabFile(file.name)) {
+      return { ok: false, error: "Use a .gp, .gpx, .xml, or .tex tab file." };
+    }
+
+    const bytes = Buffer.from(await file.arrayBuffer());
+    if (isAlphaTexFile(file.name)) {
+      return await upsertTrackTab(trackId, {
+        tabTex: bytes.toString("utf8"),
+        tabFile: null,
+        tabFilename: file.name,
+        soundsliceHash: null,
+      });
+    }
+
+    return await upsertTrackTab(trackId, {
+      tabFile: bytes.toString("base64"),
+      tabFilename: file.name,
+      tabTex: null,
+      soundsliceHash: null,
+    });
+  } catch (error) {
+    return saveFailed(error, "Could not upload that tab.");
+  }
+}
+
+async function upsertTrackTab(
+  trackId: string,
+  values: {
+    tabTex: string | null;
+    tabFile: string | null;
+    tabFilename: string | null;
+    soundsliceHash: string | null;
+  },
+): Promise<{ ok: true; tabId: string } | { ok: false; error: string }> {
   const userId = await requireUserId();
   const db = getDb();
 
   const track = db
     .select({
       id: tracks.id,
+      title: tracks.title,
       albumId: tracks.albumId,
+      artistName: artists.name,
     })
     .from(tracks)
-    .where(eq(tracks.id, input.trackId))
+    .innerJoin(albums, eq(tracks.albumId, albums.id))
+    .innerJoin(artists, eq(albums.artistId, artists.id))
+    .where(eq(tracks.id, trackId))
     .get();
 
   if (!track) {
@@ -304,17 +339,9 @@ async function linkTabToTrack(input: {
     .where(and(eq(tabs.userId, userId), eq(tabs.trackId, track.id)))
     .get();
 
-  const songsterrUrl = songsterrViewUrl(input.songsterrId);
   let tabId: string;
-
   if (existingTab) {
-    db.update(tabs)
-      .set({
-        songsterrId: input.songsterrId,
-        songsterrUrl,
-      })
-      .where(eq(tabs.id, existingTab.id))
-      .run();
+    db.update(tabs).set(values).where(eq(tabs.id, existingTab.id)).run();
     tabId = existingTab.id;
   } else {
     tabId = crypto.randomUUID();
@@ -323,8 +350,12 @@ async function linkTabToTrack(input: {
         id: tabId,
         userId,
         trackId: track.id,
-        songsterrId: input.songsterrId,
-        songsterrUrl,
+        songsterrId: 0,
+        songsterrUrl: "",
+        tabTex: values.tabTex ?? placeholderAlphaTex(track.title, track.artistName),
+        tabFile: values.tabFile,
+        tabFilename: values.tabFilename,
+        soundsliceHash: values.soundsliceHash,
         createdAt: new Date().toISOString(),
       })
       .run();
@@ -513,28 +544,34 @@ async function linkMissingAlbumTabs(userId: string, albumId: string, artistName:
   let linked = 0;
 
   await mapPool(missing, 4, async (track) => {
-    const match = await findSongsterrTab(artistName, track.title);
-    if (!match) return;
     const existing = db
       .select({ id: tabs.id })
       .from(tabs)
       .where(and(eq(tabs.userId, userId), eq(tabs.trackId, track.id)))
       .get();
     if (existing) return;
-    db.insert(tabs)
-      .values({
-        id: crypto.randomUUID(),
-        userId,
-        trackId: track.id,
-        songsterrId: match.id,
-        songsterrUrl: songsterrViewUrl(match.id),
-        createdAt: new Date().toISOString(),
-      })
-      .run();
+    insertPlaceholderTab(userId, track.id, track.title, artistName);
     linked += 1;
   });
 
   return linked;
+}
+
+function insertPlaceholderTab(userId: string, trackId: string, title: string, artistName: string) {
+  const db = getDb();
+  const id = crypto.randomUUID();
+  db.insert(tabs)
+    .values({
+      id,
+      userId,
+      trackId,
+      songsterrId: 0,
+      songsterrUrl: "",
+      tabTex: placeholderAlphaTex(title, artistName),
+      createdAt: new Date().toISOString(),
+    })
+    .run();
+  return id;
 }
 
 async function mapPool<T>(items: T[], limit: number, work: (item: T) => Promise<void>) {

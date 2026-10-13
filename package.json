@@ -12,6 +12,7 @@
   "dependencies": {
     "@clerk/nextjs": "^7.8.4",
     "@clerk/themes": "^2.4.57",
+    "@coderline/alphatab": "^1.8.4",
     "@neondatabase/serverless": "^1.1.0",
     "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.1",

@@ -120,6 +120,8 @@ export function getAlbumWithTracks(albumId: string, userId: string) {
       appleMusicId: tracks.appleMusicId,
       tabId: tabs.id,
       songsterrId: tabs.songsterrId,
+      tabFilename: tabs.tabFilename,
+      soundsliceHash: tabs.soundsliceHash,
     })
     .from(tracks)
     .leftJoin(tabs, and(eq(tabs.trackId, tracks.id), eq(tabs.userId, userId)))
@@ -138,6 +140,10 @@ export function getTabForUser(tabId: string, userId: string) {
       trackId: tracks.id,
       songsterrId: tabs.songsterrId,
       songsterrUrl: tabs.songsterrUrl,
+      tabTex: tabs.tabTex,
+      tabFile: tabs.tabFile,
+      tabFilename: tabs.tabFilename,
+      soundsliceHash: tabs.soundsliceHash,
       trackTitle: tracks.title,
       trackNumber: tracks.trackNumber,
       previewUrl: tracks.previewUrl,

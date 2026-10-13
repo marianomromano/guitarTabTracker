@@ -2,12 +2,13 @@ import { getMusicKitDeveloperToken, isMusicKitConfigured } from "@/lib/musickit-
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!isMusicKitConfigured()) {
     return Response.json({ configured: false, token: null });
   }
 
-  const token = getMusicKitDeveloperToken();
+  const url = new URL(request.url);
+  const token = getMusicKitDeveloperToken(request.headers.get("x-music-origin") || url.origin);
   if (!token) {
     return Response.json({ configured: false, token: null }, { status: 500 });
   }

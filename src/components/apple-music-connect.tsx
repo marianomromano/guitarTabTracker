@@ -33,9 +33,15 @@ export function AppleMusicConnect() {
           setError(null);
           void authorizeAppleMusic()
             .then((ok) => {
-              if (!ok) setError("Could not connect Apple Music.");
+              if (!ok) {
+                setError(
+                  `Apple rejected Music sign-in from ${window.location.hostname}. Add that host to your MusicKit identifier’s Website URLs, allow popups, then try again.`,
+                );
+              }
             })
-            .catch(() => setError("Could not connect Apple Music."))
+            .catch((error: unknown) => {
+              setError(error instanceof Error ? error.message : "Could not connect Apple Music.");
+            })
             .finally(() => setBusy(false));
         }}
       >

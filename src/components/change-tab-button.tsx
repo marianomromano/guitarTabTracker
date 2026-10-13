@@ -9,13 +9,12 @@ export function ChangeTabButton({
   trackId,
   trackTitle,
   artistName,
-  currentSongsterrId,
   size = "default",
 }: {
   trackId: string;
   trackTitle: string;
   artistName: string;
-  currentSongsterrId: number;
+  currentSongsterrId?: number;
   size?: "default" | "sm";
 }) {
   const [open, setOpen] = useState(false);
@@ -32,7 +31,6 @@ export function ChangeTabButton({
         trackId={trackId}
         trackTitle={trackTitle}
         artistName={artistName}
-        currentSongsterrId={currentSongsterrId}
       />
     </>
   );

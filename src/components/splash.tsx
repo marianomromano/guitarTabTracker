@@ -14,7 +14,7 @@ const STEPS = [
   {
     icon: Search,
     title: "Find the tab",
-    body: "Search Songsterr for a song or artist and pick the version you want to learn.",
+    body: "Search a song or artist and pick the album you want to learn.",
   },
   {
     icon: Disc3,
@@ -44,8 +44,8 @@ export function Splash({
           Your guitar tabs, filed with the records they belong to.
         </h1>
         <p className="mt-4 max-w-2xl text-base text-muted-foreground text-pretty sm:text-lg">
-          Search Songsterr, attach each tab to a real album cover, and browse the
-          collection on a shelf — not a flat list of links.
+          Search a song, attach each tab to a real album cover, and read the
+          notation in the app — not a flat list of Songsterr links.
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">

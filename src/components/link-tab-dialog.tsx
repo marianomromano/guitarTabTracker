@@ -1,9 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
-import { linkTabToTrackAction, searchTabsAction } from "@/app/actions";
+import { useState, useTransition } from "react";
+import { attachSoundsliceAction, uploadTabFileAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,8 +11,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import type { SongsterrSong } from "@/lib/songsterr";
 
 export function LinkTabDialog({
   open,
@@ -22,7 +18,6 @@ export function LinkTabDialog({
   trackId,
   trackTitle,
   artistName,
-  currentSongsterrId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -31,126 +26,72 @@ export function LinkTabDialog({
   artistName: string;
   currentSongsterrId?: number | null;
 }) {
-  const router = useRouter();
-  const defaultQuery = `${artistName} ${trackTitle}`.trim();
-  const [query, setQuery] = useState(defaultQuery);
-  const [results, setResults] = useState<SongsterrSong[]>([]);
+  const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [searching, startSearch] = useTransition();
-  const [linking, startLink] = useTransition();
-
-  useEffect(() => {
-    if (!open) return;
-    const nextQuery = `${artistName} ${trackTitle}`.trim();
-    setQuery(nextQuery);
-    setError(null);
-    startSearch(async () => {
-      try {
-        const songs = await searchTabsAction(nextQuery);
-        setResults(songs);
-      } catch {
-        setError("Could not search Songsterr right now.");
-        setResults([]);
-      }
-    });
-  }, [open, trackId, artistName, trackTitle]);
-
-  function runSearch(nextQuery: string) {
-    startSearch(async () => {
-      try {
-        setError(null);
-        const songs = await searchTabsAction(nextQuery);
-        setResults(songs);
-      } catch {
-        setError("Could not search Songsterr right now.");
-        setResults([]);
-      }
-    });
-  }
-
-  function onSearch(event: FormEvent) {
-    event.preventDefault();
-    runSearch(query);
-  }
-
-  function choose(song: SongsterrSong) {
-    startLink(async () => {
-      const result = await linkTabToTrackAction({
-        trackId,
-        songsterrId: song.id,
-      });
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      onOpenChange(false);
-      router.refresh();
-    });
-  }
+  const [sliceUrl, setSliceUrl] = useState("");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg bg-[#171410] sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {currentSongsterrId ? "Change tab" : "Link a tab"}
-          </DialogTitle>
+          <DialogTitle>Attach a tab</DialogTitle>
           <DialogDescription>
-            Pick a Songsterr tab for {trackTitle} by {artistName}.
+            Upload a Guitar Pro file for {trackTitle} by {artistName}, or paste a Soundslice URL.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSearch} className="flex gap-2">
-          <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-input bg-black/20 px-3 md:min-h-8 md:px-2.5">
-            <Search className="size-4 shrink-0 text-muted-foreground md:size-3.5" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Song or artist"
-              className="h-full border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 dark:bg-transparent"
-            />
-          </label>
-          <Button type="submit" disabled={searching} className="bg-gold text-black hover:bg-gold/90">
-            {searching ? "Searching..." : "Search"}
+        <form
+          className="grid gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const file = new FormData(event.currentTarget).get("file");
+            if (!(file instanceof File) || file.size === 0) {
+              setError("Choose a tab file first.");
+              return;
+            }
+            const data = new FormData();
+            data.set("trackId", trackId);
+            data.set("file", file);
+            setError(null);
+            startTransition(async () => {
+              const result = await uploadTabFileAction(data);
+              if (!result.ok) {
+                setError(result.error);
+                return;
+              }
+              onOpenChange(false);
+            });
+          }}
+        >
+          <Input type="file" name="file" accept=".gp,.gp3,.gp4,.gp5,.gpx,.gpb,.xml,.musicxml,.tex,.alphatex,.txt" />
+          <Button type="submit" disabled={pending} className="bg-gold text-black hover:bg-gold/90">
+            {pending ? "Saving…" : "Upload and embed"}
+          </Button>
+        </form>
+        <form
+          className="grid gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setError(null);
+            startTransition(async () => {
+              const result = await attachSoundsliceAction({ trackId, url: sliceUrl });
+              if (!result.ok) {
+                setError(result.error);
+                return;
+              }
+              onOpenChange(false);
+            });
+          }}
+        >
+          <Input
+            value={sliceUrl}
+            onChange={(event) => setSliceUrl(event.target.value)}
+            placeholder="Soundslice slice URL"
+          />
+          <Button type="submit" variant="outline" disabled={pending} className="border-white/15">
+            Embed Soundslice
           </Button>
         </form>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        <div className="grid max-h-[50vh] gap-1 overflow-y-auto">
-          {searching && results.length === 0 ? (
-            <p className="px-2 py-6 text-sm text-muted-foreground">Searching Songsterr...</p>
-          ) : results.length === 0 ? (
-            <p className="px-2 py-6 text-sm text-muted-foreground">No tabs found.</p>
-          ) : (
-            results.map((song) => {
-              const selected = currentSongsterrId === song.id;
-              return (
-                <button
-                  key={song.id}
-                  type="button"
-                  disabled={linking}
-                  onClick={() => choose(song)}
-                  className="flex min-h-14 items-start justify-between gap-3 rounded-lg p-3 text-left active:bg-white/10 hover:bg-white/5 disabled:opacity-60"
-                >
-                  <span>
-                    <span className="block text-sm">{song.title}</span>
-                    <span className="text-xs text-muted-foreground">{song.artist}</span>
-                    {song.instruments.length ? (
-                      <span className="mt-1 flex flex-wrap gap-1">
-                        {song.instruments.map((instrument) => (
-                          <Badge key={instrument} variant="secondary">
-                            {instrument}
-                          </Badge>
-                        ))}
-                      </span>
-                    ) : null}
-                  </span>
-                  {selected ? (
-                    <span className="shrink-0 text-xs text-gold">Current</span>
-                  ) : null}
-                </button>
-              );
-            })
-          )}
-        </div>
       </DialogContent>
     </Dialog>
   );

@@ -78,7 +78,10 @@ export default async function AlbumPage({
         />
         <div className="mt-4 space-y-2">
           <AppleMusicConnect />
-          <p className="text-sm text-muted-foreground">The gold guitar opens the tab in Songsterr.</p>
+          <p className="text-sm text-muted-foreground">
+            The gold guitar opens the tab in the app with alphaTab. Upload a Guitar Pro file to
+            replace the blank staff.
+          </p>
         </div>
       </div>
     </div>

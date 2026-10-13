@@ -15,6 +15,15 @@ export type ItunesTrack = {
   appleMusicId: string | null;
 };
 
+export type ItunesSongOption = {
+  trackId: number;
+  trackName: string;
+  artistName: string;
+  collectionId: number;
+  collectionName: string;
+  artworkUrl: string | null;
+};
+
 type ItunesResult = {
   wrapperType?: string;
   kind?: string;
@@ -150,6 +159,38 @@ export async function lookupItunesAlbum(collectionId: number) {
     .sort((a, b) => a.discNumber - b.discNumber || a.trackNumber - b.trackNumber);
 
   return { album, tracks, artistId: collection?.artistId ?? songs[0]?.artistId };
+}
+
+export async function searchItunesSongs(query: string): Promise<ItunesSongOption[]> {
+  const pattern = query.trim();
+  if (!pattern) return [];
+
+  const url = new URL("https://itunes.apple.com/search");
+  url.searchParams.set("term", pattern);
+  url.searchParams.set("entity", "song");
+  url.searchParams.set("limit", "25");
+
+  const results = await itunesJson(url);
+  const songs: ItunesSongOption[] = [];
+  const seen = new Set<number>();
+
+  for (const result of results) {
+    if (result.kind !== "song" || !result.trackId || !result.trackName || !result.collectionId) {
+      continue;
+    }
+    if (seen.has(result.trackId)) continue;
+    seen.add(result.trackId);
+    songs.push({
+      trackId: result.trackId,
+      trackName: result.trackName,
+      artistName: result.artistName ?? "Unknown Artist",
+      collectionId: result.collectionId,
+      collectionName: result.collectionName ?? "Unknown Album",
+      artworkUrl: hiResArtwork(result.artworkUrl100),
+    });
+  }
+
+  return songs;
 }
 
 export async function searchItunesSong(artist: string, title: string, albumTitle?: string) {

@@ -8,6 +8,7 @@ import { PlayButton } from "@/components/play-button";
 import { TabStage } from "@/components/tab-stage";
 import { resolveTrackMediaAction } from "@/app/actions";
 import { requireUserId } from "@/lib/auth";
+import { placeholderAlphaTex } from "@/lib/alphatex";
 import { getTabForUser } from "@/lib/library";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export default async function TabPage({
   const media = await resolveTrackMediaAction(tab.trackId);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-6">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6">
       <Link
         href={`/album/${tab.albumId}`}
         className="mb-4 inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -68,14 +69,21 @@ export default async function TabPage({
             trackId={tab.trackId}
             trackTitle={tab.trackTitle}
             artistName={tab.artistName}
-            currentSongsterrId={tab.songsterrId}
           />
         </div>
       </div>
       <div className="mb-4">
         <AppleMusicConnect />
       </div>
-      <TabStage songsterrUrl={tab.songsterrUrl} title={tab.trackTitle} />
+      <TabStage
+        trackId={tab.trackId}
+        title={tab.trackTitle}
+        artist={tab.artistName}
+        tabTex={tab.tabTex ?? placeholderAlphaTex(tab.trackTitle, tab.artistName)}
+        tabFile={tab.tabFile}
+        tabFilename={tab.tabFilename}
+        soundsliceHash={tab.soundsliceHash}
+      />
     </div>
   );
 }

@@ -28,6 +28,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "TabShelf",
   description: "Find guitar tabs and keep them on a bookshelf of albums.",
+  referrer: "origin",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

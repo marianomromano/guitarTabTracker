@@ -1,36 +1,55 @@
 "use client";
 
-import { useEffect } from "react";
-import { ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlphaTabViewer } from "@/components/alpha-tab-viewer";
+import { AttachTabForm } from "@/components/attach-tab-form";
+import { soundsliceEmbedUrl } from "@/lib/soundslice";
 
 export function TabStage({
-  songsterrUrl,
+  trackId,
   title,
+  artist,
+  tabTex,
+  tabFile,
+  tabFilename,
+  soundsliceHash,
 }: {
-  songsterrUrl: string;
+  trackId: string;
   title: string;
+  artist: string;
+  tabTex: string | null;
+  tabFile: string | null;
+  tabFilename: string | null;
+  soundsliceHash: string | null;
 }) {
-  useEffect(() => {
-    const key = `tabshelf-tab:${songsterrUrl}`;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, "1");
-    window.open(songsterrUrl, "_blank", "noopener,noreferrer");
-  }, [songsterrUrl]);
+  const hasAlphaTab = Boolean(tabFile || tabTex);
 
   return (
-    <div className="flex min-h-[22rem] flex-1 flex-col items-center justify-center gap-4 rounded-2xl bg-black/25 px-6 py-16 text-center ring-1 ring-white/10">
-      <p className="text-[11px] tracking-[0.28em] text-gold uppercase">Guitar tab</p>
-      <p className="max-w-md text-sm text-muted-foreground text-pretty">
-        Songsterr blocks tabs inside other apps, so {title} opens in a new window. Keep this page
-        playing the song and read the tab next to it.
-      </p>
-      <Button asChild size="lg" className="h-12 bg-gold text-black hover:bg-gold/90">
-        <a href={songsterrUrl} target="_blank" rel="noopener noreferrer">
-          Show the tab
-          <ExternalLink />
-        </a>
-      </Button>
+    <div className="flex flex-1 flex-col gap-4">
+      {soundsliceHash ? (
+        <iframe
+          title={`${title} tab`}
+          src={soundsliceEmbedUrl(soundsliceHash)}
+          className="min-h-[28rem] w-full flex-1 rounded-2xl bg-black/25 ring-1 ring-white/10"
+          allow="autoplay"
+        />
+      ) : hasAlphaTab ? (
+        <AlphaTabViewer tex={tabTex} fileBase64={tabFile} />
+      ) : (
+        <div className="flex min-h-[16rem] flex-col items-center justify-center rounded-2xl bg-black/25 px-6 py-12 text-center ring-1 ring-white/10">
+          <p className="text-[11px] tracking-[0.28em] text-gold uppercase">Guitar tab</p>
+          <p className="mt-3 max-w-md text-sm text-muted-foreground text-pretty">
+            Upload a Guitar Pro file to render {title} here with alphaTab, or paste a Soundslice
+            slice URL.
+          </p>
+        </div>
+      )}
+      <AttachTabForm
+        trackId={trackId}
+        artistName={artist}
+        trackTitle={title}
+        filename={tabFilename}
+        soundsliceHash={soundsliceHash}
+      />
     </div>
   );
 }

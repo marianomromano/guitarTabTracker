@@ -31,7 +31,10 @@ export async function configureMusicKit() {
   if (configuredPromise) return configuredPromise;
 
   configuredPromise = (async () => {
-    const response = await fetch("/api/musickit/token", { cache: "no-store" });
+    const response = await fetch("/api/musickit/token", {
+      cache: "no-store",
+      headers: { "x-music-origin": window.location.origin },
+    });
     const data = (await response.json()) as TokenResponse;
     if (!data.configured || !data.token) return false;
 
@@ -55,6 +58,15 @@ export async function configureMusicKit() {
 export function getMusicKit() {
   if (!configured || !window.MusicKit) return null;
   return window.MusicKit.getInstance();
+}
+
+export function authorizeErrorMessage(error: unknown) {
+  const raw = error instanceof Error ? error.message : String(error ?? "");
+  const host = typeof window !== "undefined" ? window.location.hostname : "this site";
+  if (/error_request_failed|REQUEST_FAILED|authorization|cancelled|canceled|popup/i.test(raw) || !raw) {
+    return `Apple rejected Music sign-in from ${host}. In Certificates, Identifiers & Profiles, open your MusicKit identifier and add ${host} under Website URLs, then allow popups and try again.`;
+  }
+  return raw;
 }
 
 export async function searchCatalogSong(artist: string, title: string) {

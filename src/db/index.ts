@@ -48,6 +48,10 @@ function ensureSchema(sqlite: InstanceType<typeof Database>) {
       track_id TEXT NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
       songsterr_id INTEGER NOT NULL,
       songsterr_url TEXT NOT NULL,
+      tab_tex TEXT,
+      tab_file TEXT,
+      tab_filename TEXT,
+      soundslice_hash TEXT,
       created_at TEXT NOT NULL
     );
     CREATE UNIQUE INDEX IF NOT EXISTS tabs_user_track_idx ON tabs(user_id, track_id);
@@ -55,15 +59,29 @@ function ensureSchema(sqlite: InstanceType<typeof Database>) {
 }
 
 function migrateSchema(sqlite: InstanceType<typeof Database>) {
-  const columns = sqlite.pragma("table_info(tracks)") as { name: string }[];
-  if (!columns.some((column) => column.name === "preview_url")) {
+  const trackColumns = sqlite.pragma("table_info(tracks)") as { name: string }[];
+  if (!trackColumns.some((column) => column.name === "preview_url")) {
     sqlite.exec("ALTER TABLE tracks ADD COLUMN preview_url TEXT");
   }
-  if (!columns.some((column) => column.name === "youtube_video_id")) {
+  if (!trackColumns.some((column) => column.name === "youtube_video_id")) {
     sqlite.exec("ALTER TABLE tracks ADD COLUMN youtube_video_id TEXT");
   }
-  if (!columns.some((column) => column.name === "apple_music_id")) {
+  if (!trackColumns.some((column) => column.name === "apple_music_id")) {
     sqlite.exec("ALTER TABLE tracks ADD COLUMN apple_music_id TEXT");
+  }
+
+  const tabColumns = sqlite.pragma("table_info(tabs)") as { name: string }[];
+  if (!tabColumns.some((column) => column.name === "tab_tex")) {
+    sqlite.exec("ALTER TABLE tabs ADD COLUMN tab_tex TEXT");
+  }
+  if (!tabColumns.some((column) => column.name === "tab_file")) {
+    sqlite.exec("ALTER TABLE tabs ADD COLUMN tab_file TEXT");
+  }
+  if (!tabColumns.some((column) => column.name === "tab_filename")) {
+    sqlite.exec("ALTER TABLE tabs ADD COLUMN tab_filename TEXT");
+  }
+  if (!tabColumns.some((column) => column.name === "soundslice_hash")) {
+    sqlite.exec("ALTER TABLE tabs ADD COLUMN soundslice_hash TEXT");
   }
 }
 

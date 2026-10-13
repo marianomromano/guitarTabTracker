@@ -6,7 +6,6 @@ import { Guitar, Link2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LinkTabDialog } from "@/components/link-tab-dialog";
 import { PlayButton } from "@/components/play-button";
-import { songsterrViewUrl } from "@/lib/songsterr";
 
 type TrackRow = {
   id: string;
@@ -15,7 +14,9 @@ type TrackRow = {
   previewUrl: string | null;
   appleMusicId?: string | null;
   tabId: string | null;
-  songsterrId: number | null;
+  songsterrId?: number | null;
+  tabFilename?: string | null;
+  soundsliceHash?: string | null;
 };
 
 export function TrackList({
@@ -54,11 +55,6 @@ export function TrackList({
               {tabHref ? (
                 <Link
                   href={tabHref}
-                  onClick={() => {
-                    if (track.songsterrId) {
-                      window.open(songsterrViewUrl(track.songsterrId), "_blank", "noopener,noreferrer");
-                    }
-                  }}
                   className="flex min-h-14 min-w-0 flex-1 items-center gap-3 px-3 py-3.5 text-sm text-zinc-100 transition active:bg-white/10 hover:bg-white/5"
                 >
                   <span className="w-8 shrink-0 font-mono text-xs text-muted-foreground">

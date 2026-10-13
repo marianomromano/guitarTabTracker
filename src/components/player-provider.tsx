@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { configureMusicKit, getMusicKit, searchCatalogSong } from "@/lib/musickit";
+import { authorizeErrorMessage, configureMusicKit, getMusicKit, searchCatalogSong } from "@/lib/musickit";
 
 export type PlayableTrack = {
   id: string;
@@ -109,14 +109,21 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const authorizeAppleMusic = useCallback(async () => {
-    const ready = await configureMusicKit();
-    setMusicConfigured(ready);
-    if (!ready) return false;
-    const music = getMusicKit();
+    let music = getMusicKit();
+    if (!music) {
+      const ready = await configureMusicKit();
+      setMusicConfigured(ready);
+      if (!ready) return false;
+      music = getMusicKit();
+    }
     if (!music) return false;
     bindMusicEvents(music);
     if (!music.isAuthorized) {
-      await music.authorize();
+      try {
+        await music.authorize();
+      } catch (error) {
+        throw new Error(authorizeErrorMessage(error));
+      }
     }
     setMusicAuthorized(Boolean(music.isAuthorized));
     return Boolean(music.isAuthorized);
