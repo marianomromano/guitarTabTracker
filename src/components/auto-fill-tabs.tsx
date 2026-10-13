@@ -1,26 +1,41 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { fillMissingAlbumTabsAction } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 
 export function AutoFillTabs({ albumId, missing }: { albumId: string; missing: number }) {
   const router = useRouter();
-  const started = useRef(false);
-  const [working, setWorking] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!missing || started.current) return;
-    started.current = true;
-    setWorking(true);
-    void fillMissingAlbumTabsAction(albumId)
-      .then(() => router.refresh())
-      .finally(() => setWorking(false));
-  }, [albumId, missing, router]);
-
-  if (!working) return null;
+  if (!missing) return null;
 
   return (
-    <p className="mt-3 text-sm text-gold">Finding tabs for the rest of this album…</p>
+    <div className="mt-3">
+      <Button
+        type="button"
+        variant="outline"
+        className="border-white/15"
+        disabled={pending}
+        onClick={() => {
+          setError(null);
+          startTransition(async () => {
+            const result = await fillMissingAlbumTabsAction(albumId);
+            if (!result.ok) {
+              setError("Could not add the remaining guitar tabs.");
+              return;
+            }
+            router.refresh();
+          });
+        }}
+      >
+        {pending
+          ? "Adding guitar tabs…"
+          : `Add guitar tabs for ${missing} remaining ${missing === 1 ? "song" : "songs"}`}
+      </Button>
+      {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+    </div>
   );
 }

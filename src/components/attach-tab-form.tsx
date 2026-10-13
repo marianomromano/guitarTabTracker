@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 
 export function AttachTabForm({
   trackId,
+  instrument = "guitar",
   filename,
   soundsliceHash,
 }: {
   trackId: string;
   artistName: string;
   trackTitle: string;
+  instrument?: string;
   filename: string | null;
   soundsliceHash: string | null;
 }) {
@@ -40,6 +42,7 @@ export function AttachTabForm({
           }
           const data = new FormData();
           data.set("trackId", trackId);
+          data.set("instrument", instrument);
           data.set("file", file);
           setError(null);
           startTransition(async () => {
@@ -59,7 +62,7 @@ export function AttachTabForm({
           event.preventDefault();
           setError(null);
           startTransition(async () => {
-            const result = await attachSoundsliceAction({ trackId, url: sliceUrl });
+            const result = await attachSoundsliceAction({ trackId, url: sliceUrl, instrument });
             if (!result.ok) setError(result.error);
           });
         }}

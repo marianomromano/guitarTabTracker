@@ -1,10 +1,35 @@
+import type { Instrument } from "@/lib/instrument";
+
 function escapeTex(value: string) {
   return value.replace(/\\/g, "").replace(/"/g, "'").trim() || "Untitled";
 }
 
-export function placeholderAlphaTex(title: string, artist: string) {
-  return `\\title "${escapeTex(title)}"
-\\artist "${escapeTex(artist)}"
+export function placeholderAlphaTex(
+  title: string,
+  artist: string,
+  instrument: Instrument = "guitar",
+) {
+  const header = `\\title "${escapeTex(title)}"
+\\artist "${escapeTex(artist)}"`;
+
+  if (instrument === "bass") {
+    return `${header}
+\\tuning e2 a2 d3 g3
+\\instrument AcousticBass
+.
+\\ts 4 4
+:4 r r r r | r r r r | r r r r | r r r r |`;
+  }
+
+  if (instrument === "drums") {
+    return `${header}
+\\instrument AcousticBassDrum
+.
+\\ts 4 4
+:4 r r r r | r r r r | r r r r | r r r r |`;
+  }
+
+  return `${header}
 .
 \\ts 4 4
 :4 r r r r | r r r r | r r r r | r r r r |`;

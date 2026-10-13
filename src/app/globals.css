@@ -139,11 +139,11 @@ body:has([data-app-nav]) main {
 }
 
 body:has([data-now-playing]) main {
-  padding-bottom: 8.5rem;
+  padding-bottom: 11rem;
 }
 
 body:has([data-app-nav]):has([data-now-playing]) main {
-  padding-bottom: calc(13.5rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(16rem + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 768px) {
@@ -153,7 +153,7 @@ body:has([data-app-nav]):has([data-now-playing]) main {
 
   body:has([data-now-playing]) main,
   body:has([data-app-nav]):has([data-now-playing]) main {
-    padding-bottom: 8.5rem;
+    padding-bottom: 11rem;
   }
 }
 

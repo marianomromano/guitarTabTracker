@@ -18,12 +18,14 @@ export function LinkTabDialog({
   trackId,
   trackTitle,
   artistName,
+  instrument = "guitar",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   trackId: string;
   trackTitle: string;
   artistName: string;
+  instrument?: string;
   currentSongsterrId?: number | null;
 }) {
   const [pending, startTransition] = useTransition();
@@ -36,7 +38,8 @@ export function LinkTabDialog({
         <DialogHeader>
           <DialogTitle>Attach a tab</DialogTitle>
           <DialogDescription>
-            Upload a Guitar Pro file for {trackTitle} by {artistName}, or paste a Soundslice URL.
+            Upload a Guitar Pro file for the {instrument} part of {trackTitle} by {artistName}, or
+            paste a Soundslice URL.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -50,6 +53,7 @@ export function LinkTabDialog({
             }
             const data = new FormData();
             data.set("trackId", trackId);
+            data.set("instrument", instrument);
             data.set("file", file);
             setError(null);
             startTransition(async () => {
@@ -73,7 +77,7 @@ export function LinkTabDialog({
             event.preventDefault();
             setError(null);
             startTransition(async () => {
-              const result = await attachSoundsliceAction({ trackId, url: sliceUrl });
+              const result = await attachSoundsliceAction({ trackId, url: sliceUrl, instrument });
               if (!result.ok) {
                 setError(result.error);
                 return;

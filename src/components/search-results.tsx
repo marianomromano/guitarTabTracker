@@ -11,7 +11,7 @@ export function SearchResults({
   if (!query) {
     return (
       <p className="text-muted-foreground">
-        Search for a song or artist to add the album tabs to your shelf.
+        Search for a song, then add guitar, bass, or drums for that track.
       </p>
     );
   }

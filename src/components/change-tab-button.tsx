@@ -9,11 +9,13 @@ export function ChangeTabButton({
   trackId,
   trackTitle,
   artistName,
+  instrument,
   size = "default",
 }: {
   trackId: string;
   trackTitle: string;
   artistName: string;
+  instrument?: string;
   currentSongsterrId?: number;
   size?: "default" | "sm";
 }) {
@@ -31,6 +33,7 @@ export function ChangeTabButton({
         trackId={trackId}
         trackTitle={trackTitle}
         artistName={artistName}
+        instrument={instrument}
       />
     </>
   );

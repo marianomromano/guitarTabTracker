@@ -35,6 +35,7 @@ type PlayerContextValue = {
   toggle: () => void;
   seek: (time: number) => void;
   stop: () => void;
+  getPlaybackTime: () => number;
   authorizeAppleMusic: () => Promise<boolean>;
 };
 
@@ -50,6 +51,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [source, setSource] = useState<PlaybackSource>(null);
   const [musicConfigured, setMusicConfigured] = useState(false);
   const [musicAuthorized, setMusicAuthorized] = useState(false);
+  const sourceRef = useRef<PlaybackSource>(null);
+  sourceRef.current = source;
 
   const bindMusicEvents = useCallback((music: NonNullable<ReturnType<typeof getMusicKit>>) => {
     if (listenersBound.current || !window.MusicKit) return;
@@ -193,6 +196,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     [source],
   );
 
+  const getPlaybackTime = useCallback(() => {
+    if (sourceRef.current === "apple") {
+      return getMusicKit()?.currentPlaybackTime || 0;
+    }
+    return audioRef.current?.currentTime || 0;
+  }, []);
+
   const stop = useCallback(() => {
     getMusicKit()?.stop();
     const audio = audioRef.current;
@@ -220,11 +230,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       toggle,
       seek,
       stop,
+      getPlaybackTime,
       authorizeAppleMusic,
     }),
     [
       authorizeAppleMusic,
       duration,
+      getPlaybackTime,
       musicAuthorized,
       musicConfigured,
       play,

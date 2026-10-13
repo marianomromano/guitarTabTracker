@@ -4,11 +4,13 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { AppleMusicConnect } from "@/components/apple-music-connect";
 import { ChangeTabButton } from "@/components/change-tab-button";
+import { PartButtons } from "@/components/part-buttons";
 import { PlayButton } from "@/components/play-button";
 import { TabStage } from "@/components/tab-stage";
 import { resolveTrackMediaAction } from "@/app/actions";
 import { requireUserId } from "@/lib/auth";
 import { placeholderAlphaTex } from "@/lib/alphatex";
+import { INSTRUMENT_LABEL } from "@/lib/instrument";
 import { getTabForUser } from "@/lib/library";
 
 export const dynamic = "force-dynamic";
@@ -50,12 +52,22 @@ export default async function TabPage({
           />
         ) : null}
         <div className="min-w-0 flex-1">
+          <p className="text-[11px] tracking-[0.28em] text-gold uppercase">
+            {INSTRUMENT_LABEL[tab.instrument]}
+          </p>
           <h1 className="font-heading text-2xl sm:text-3xl">{tab.trackTitle}</h1>
           <p className="text-sm text-muted-foreground">
             {tab.artistName} · {tab.albumTitle}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <PartButtons
+            trackId={tab.trackId}
+            parts={tab.parts}
+            collectionId={tab.itunesCollectionId}
+            trackNumber={tab.trackNumber}
+            active={tab.instrument}
+          />
           <PlayButton
             size="lg"
             track={{
@@ -71,6 +83,7 @@ export default async function TabPage({
             trackId={tab.trackId}
             trackTitle={tab.trackTitle}
             artistName={tab.artistName}
+            instrument={tab.instrument}
           />
         </div>
       </div>
@@ -81,7 +94,8 @@ export default async function TabPage({
         trackId={tab.trackId}
         title={tab.trackTitle}
         artist={tab.artistName}
-        tabTex={tab.tabTex ?? placeholderAlphaTex(tab.trackTitle, tab.artistName)}
+        instrument={tab.instrument}
+        tabTex={tab.tabTex ?? placeholderAlphaTex(tab.trackTitle, tab.artistName, tab.instrument)}
         tabFile={tab.tabFile}
         tabFilename={tab.tabFilename}
         soundsliceHash={tab.soundsliceHash}

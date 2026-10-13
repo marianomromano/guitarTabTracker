@@ -1,29 +1,71 @@
 import { cookies } from "next/headers";
+import { isInstrument, type Instrument } from "@/lib/instrument";
 
 const SHELF_COOKIE = "tabshelf-shelf";
-const MAX_ALBUMS = 80;
+const MAX_ENTRIES = 120;
 
-export async function readShelfCollectionIds() {
+export type ShelfPart = {
+  collectionId: number;
+  trackNumber?: number;
+  instrument: Instrument;
+};
+
+export async function readShelfParts(): Promise<ShelfPart[]> {
   const jar = await cookies();
   const raw = jar.get(SHELF_COOKIE)?.value ?? "";
-  return [
-    ...new Set(
-      raw
-        .split(",")
-        .map((value) => Number(value))
-        .filter((value) => Number.isInteger(value) && value > 0),
-    ),
-  ];
+  const parts: ShelfPart[] = [];
+
+  for (const token of raw.split(",")) {
+    const value = token.trim();
+    if (!value) continue;
+    const match = value.match(/^(\d+)(?:-(\d+)-(guitar|bass|drums))?$/);
+    if (!match) continue;
+    const collectionId = Number(match[1]);
+    if (!Number.isInteger(collectionId) || collectionId <= 0) continue;
+    if (match[2] && isInstrument(match[3])) {
+      parts.push({
+        collectionId,
+        trackNumber: Number(match[2]),
+        instrument: match[3],
+      });
+      continue;
+    }
+    parts.push({ collectionId, instrument: "guitar" });
+  }
+
+  return parts;
 }
 
-export async function rememberShelfAlbum(collectionId: number) {
+export async function rememberShelfPart(
+  collectionId: number,
+  trackNumber: number,
+  instrument: Instrument,
+) {
   if (!Number.isInteger(collectionId) || collectionId <= 0) return;
+  const next = [
+    { collectionId, trackNumber, instrument },
+    ...(await readShelfParts()).filter(
+      (part) =>
+        !(
+          part.collectionId === collectionId &&
+          part.trackNumber === trackNumber &&
+          part.instrument === instrument
+        ),
+    ),
+  ].slice(0, MAX_ENTRIES);
+  await writeShelf(next);
+}
+
+async function writeShelf(parts: ShelfPart[]) {
   const jar = await cookies();
-  const next = [collectionId, ...(await readShelfCollectionIds()).filter((id) => id !== collectionId)].slice(
-    0,
-    MAX_ALBUMS,
-  );
-  jar.set(SHELF_COOKIE, next.join(","), {
+  const value = parts
+    .map((part) =>
+      part.trackNumber
+        ? `${part.collectionId}-${part.trackNumber}-${part.instrument}`
+        : String(part.collectionId),
+    )
+    .join(",");
+  jar.set(SHELF_COOKIE, value, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",

@@ -52,9 +52,9 @@ function ensureSchema(sqlite: InstanceType<typeof Database>) {
       tab_file TEXT,
       tab_filename TEXT,
       soundslice_hash TEXT,
+      instrument TEXT NOT NULL DEFAULT 'guitar',
       created_at TEXT NOT NULL
     );
-    CREATE UNIQUE INDEX IF NOT EXISTS tabs_user_track_idx ON tabs(user_id, track_id);
   `);
 }
 
@@ -83,6 +83,14 @@ function migrateSchema(sqlite: InstanceType<typeof Database>) {
   if (!tabColumns.some((column) => column.name === "soundslice_hash")) {
     sqlite.exec("ALTER TABLE tabs ADD COLUMN soundslice_hash TEXT");
   }
+  if (!tabColumns.some((column) => column.name === "instrument")) {
+    sqlite.exec("ALTER TABLE tabs ADD COLUMN instrument TEXT NOT NULL DEFAULT 'guitar'");
+  }
+
+  sqlite.exec("DROP INDEX IF EXISTS tabs_user_track_idx");
+  sqlite.exec(
+    "CREATE UNIQUE INDEX IF NOT EXISTS tabs_user_track_instrument_idx ON tabs(user_id, track_id, instrument)",
+  );
 }
 
 function seedLibrary(sqlite: InstanceType<typeof Database>) {

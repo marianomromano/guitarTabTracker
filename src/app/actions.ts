@@ -29,8 +29,9 @@ import {
 } from "@/lib/itunes";
 import { isAlphaTexFile, isTabFile, placeholderAlphaTex } from "@/lib/alphatex";
 import { ensureItunesAlbum, ensureUserTab } from "@/lib/hydrate";
-import { itunesAlbumId, itunesTabPath, parseItunesAlbumId } from "@/lib/ids";
-import { rememberShelfAlbum } from "@/lib/shelf";
+import { itunesAlbumId, partTabHref, parseItunesAlbumId, userTabId } from "@/lib/ids";
+import { parseInstrument, parseInstruments } from "@/lib/instrument";
+import { rememberShelfPart } from "@/lib/shelf";
 import { parseSoundsliceHash } from "@/lib/soundslice";
 import { revalidatePath } from "next/cache";
 
@@ -94,6 +95,7 @@ export async function addTabAction(input: {
   title: string;
   artist: string;
   collectionId?: number;
+  instruments?: string[];
 }): Promise<AddTabResult> {
   try {
     return await addTab(input);
@@ -106,10 +108,12 @@ async function addTab(input: {
   title: string;
   artist: string;
   collectionId?: number;
+  instruments?: string[];
 }): Promise<AddTabResult> {
   const userId = await requireUserId();
   const artistName = input.artist.trim();
   const title = input.title.trim();
+  const instruments = parseInstruments(input.instruments);
 
   let collectionId = input.collectionId;
   if (!collectionId) {
@@ -147,7 +151,7 @@ async function addTab(input: {
     };
   }
 
-  const hydrated = await ensureItunesAlbum(collectionId, userId);
+  const hydrated = await ensureItunesAlbum(collectionId);
   if (!hydrated) {
     return { ok: false, error: "Could not save that album. Try again." };
   }
@@ -161,18 +165,86 @@ async function addTab(input: {
     return { ok: false, error: "Saved the album but could not attach the tab to a track." };
   }
 
-  const savedTab = ensureUserTab(userId, dbTrack.id, dbTrack.title, lookup.album.artistName);
-  await rememberShelfAlbum(collectionId);
+  let savedTabId = "";
+  let tabHref = "";
+  for (const instrument of instruments) {
+    const savedTab = ensureUserTab(
+      userId,
+      dbTrack.id,
+      dbTrack.title,
+      lookup.album.artistName,
+      instrument,
+    );
+    await rememberShelfPart(collectionId, dbTrack.trackNumber, instrument);
+    if (!savedTabId) {
+      savedTabId = savedTab.id;
+      tabHref = partTabHref(collectionId, dbTrack.trackNumber, instrument, savedTab.id);
+    }
+  }
 
   const albumHrefId = hydrated.album.itunesCollectionId
     ? itunesAlbumId(Number(hydrated.album.itunesCollectionId))
     : hydrated.album.id;
-  const tabHref = itunesTabPath(collectionId, dbTrack.trackNumber);
 
   revalidatePath("/");
+  revalidatePath("/library");
   revalidatePath(`/album/${albumHrefId}`);
   revalidatePath(tabHref);
-  return { ok: true, albumId: albumHrefId, tabId: savedTab.id, tabHref };
+  return { ok: true, albumId: albumHrefId, tabId: savedTabId, tabHref };
+}
+
+export async function addPartAction(input: {
+  trackId: string;
+  instrument: string;
+}): Promise<{ ok: true; tabHref: string } | { ok: false; error: string }> {
+  try {
+    const userId = await requireUserId();
+    const instrument = parseInstrument(input.instrument);
+    const db = getDb();
+    const track = db
+      .select({
+        id: tracks.id,
+        title: tracks.title,
+        trackNumber: tracks.trackNumber,
+        albumId: albums.id,
+        artistName: artists.name,
+        itunesCollectionId: albums.itunesCollectionId,
+      })
+      .from(tracks)
+      .innerJoin(albums, eq(tracks.albumId, albums.id))
+      .innerJoin(artists, eq(albums.artistId, artists.id))
+      .where(eq(tracks.id, input.trackId))
+      .get();
+
+    if (!track) {
+      return { ok: false, error: "That song is not on this album." };
+    }
+
+    const savedTab = ensureUserTab(
+      userId,
+      track.id,
+      track.title,
+      track.artistName,
+      instrument,
+    );
+    if (track.itunesCollectionId) {
+      await rememberShelfPart(Number(track.itunesCollectionId), track.trackNumber, instrument);
+    }
+
+    const tabHref = partTabHref(
+      track.itunesCollectionId,
+      track.trackNumber,
+      instrument,
+      savedTab.id,
+    );
+    revalidatePath("/");
+    revalidatePath("/library");
+    revalidatePath(`/album/${track.albumId}`);
+    revalidatePath(tabHref);
+    return { ok: true, tabHref };
+  } catch (error) {
+    return saveFailed(error, "Could not add that part.");
+  }
 }
 
 export async function searchTabsAction(query: string): Promise<ItunesSongOption[]> {
@@ -182,13 +254,14 @@ export async function searchTabsAction(query: string): Promise<ItunesSongOption[
 export async function attachSoundsliceAction(input: {
   trackId: string;
   url: string;
+  instrument?: string;
 }): Promise<{ ok: true; tabId: string } | { ok: false; error: string }> {
   try {
     const hash = parseSoundsliceHash(input.url);
     if (!hash) {
       return { ok: false, error: "Paste a Soundslice slice URL or hash." };
     }
-    return await upsertTrackTab(input.trackId, {
+    return await upsertTrackTab(input.trackId, parseInstrument(input.instrument), {
       soundsliceHash: hash,
       tabTex: null,
       tabFile: null,
@@ -204,6 +277,7 @@ export async function uploadTabFileAction(
 ): Promise<{ ok: true; tabId: string } | { ok: false; error: string }> {
   try {
     const trackId = String(formData.get("trackId") ?? "");
+    const instrument = parseInstrument(String(formData.get("instrument") ?? ""));
     const file = formData.get("file");
     if (!trackId || !(file instanceof File) || file.size === 0) {
       return { ok: false, error: "Choose a Guitar Pro, MusicXML, or alphaTex file." };
@@ -217,7 +291,7 @@ export async function uploadTabFileAction(
 
     const bytes = Buffer.from(await file.arrayBuffer());
     if (isAlphaTexFile(file.name)) {
-      return await upsertTrackTab(trackId, {
+      return await upsertTrackTab(trackId, instrument, {
         tabTex: bytes.toString("utf8"),
         tabFile: null,
         tabFilename: file.name,
@@ -225,7 +299,7 @@ export async function uploadTabFileAction(
       });
     }
 
-    return await upsertTrackTab(trackId, {
+    return await upsertTrackTab(trackId, instrument, {
       tabFile: bytes.toString("base64"),
       tabFilename: file.name,
       tabTex: null,
@@ -238,6 +312,7 @@ export async function uploadTabFileAction(
 
 async function upsertTrackTab(
   trackId: string,
+  instrument: ReturnType<typeof parseInstrument>,
   values: {
     tabTex: string | null;
     tabFile: string | null;
@@ -252,8 +327,10 @@ async function upsertTrackTab(
     .select({
       id: tracks.id,
       title: tracks.title,
-      albumId: tracks.albumId,
+      trackNumber: tracks.trackNumber,
+      albumId: albums.id,
       artistName: artists.name,
+      itunesCollectionId: albums.itunesCollectionId,
     })
     .from(tracks)
     .innerJoin(albums, eq(tracks.albumId, albums.id))
@@ -268,7 +345,9 @@ async function upsertTrackTab(
   const existingTab = db
     .select()
     .from(tabs)
-    .where(and(eq(tabs.userId, userId), eq(tabs.trackId, track.id)))
+    .where(
+      and(eq(tabs.userId, userId), eq(tabs.trackId, track.id), eq(tabs.instrument, instrument)),
+    )
     .get();
 
   let tabId: string;
@@ -276,15 +355,16 @@ async function upsertTrackTab(
     db.update(tabs).set(values).where(eq(tabs.id, existingTab.id)).run();
     tabId = existingTab.id;
   } else {
-    tabId = crypto.randomUUID();
+    tabId = userTabId(userId, track.id, instrument);
     db.insert(tabs)
       .values({
         id: tabId,
         userId,
         trackId: track.id,
+        instrument,
         songsterrId: 0,
         songsterrUrl: "",
-        tabTex: values.tabTex ?? placeholderAlphaTex(track.title, track.artistName),
+        tabTex: values.tabTex ?? placeholderAlphaTex(track.title, track.artistName, instrument),
         tabFile: values.tabFile,
         tabFilename: values.tabFilename,
         soundsliceHash: values.soundsliceHash,
@@ -293,9 +373,21 @@ async function upsertTrackTab(
       .run();
   }
 
+  if (track.itunesCollectionId) {
+    await rememberShelfPart(Number(track.itunesCollectionId), track.trackNumber, instrument);
+  }
+
+  const tabHref = partTabHref(
+    track.itunesCollectionId,
+    track.trackNumber,
+    instrument,
+    tabId,
+  );
   revalidatePath("/");
+  revalidatePath("/library");
   revalidatePath(`/album/${track.albumId}`);
   revalidatePath(`/tab/${tabId}`);
+  revalidatePath(tabHref);
   return { ok: true, tabId };
 }
 
@@ -473,14 +565,25 @@ function applyPreviewUrls(
 
 async function linkMissingAlbumTabs(userId: string, albumId: string, artistName: string) {
   const db = getDb();
+  const album = db
+    .select({ itunesCollectionId: albums.itunesCollectionId })
+    .from(albums)
+    .where(eq(albums.id, albumId))
+    .get();
+  const collectionId = album?.itunesCollectionId ? Number(album.itunesCollectionId) : null;
+
   const albumTracks = db
     .select({
       id: tracks.id,
       title: tracks.title,
+      trackNumber: tracks.trackNumber,
       tabId: tabs.id,
     })
     .from(tracks)
-    .leftJoin(tabs, and(eq(tabs.trackId, tracks.id), eq(tabs.userId, userId)))
+    .leftJoin(
+      tabs,
+      and(eq(tabs.trackId, tracks.id), eq(tabs.userId, userId), eq(tabs.instrument, "guitar")),
+    )
     .where(eq(tracks.albumId, albumId))
     .all();
 
@@ -491,10 +594,13 @@ async function linkMissingAlbumTabs(userId: string, albumId: string, artistName:
     const existing = db
       .select({ id: tabs.id })
       .from(tabs)
-      .where(and(eq(tabs.userId, userId), eq(tabs.trackId, track.id)))
+      .where(and(eq(tabs.userId, userId), eq(tabs.trackId, track.id), eq(tabs.instrument, "guitar")))
       .get();
     if (existing) return;
-    ensureUserTab(userId, track.id, track.title, artistName);
+    ensureUserTab(userId, track.id, track.title, artistName, "guitar");
+    if (collectionId) {
+      await rememberShelfPart(collectionId, track.trackNumber, "guitar");
+    }
     linked += 1;
   });
 

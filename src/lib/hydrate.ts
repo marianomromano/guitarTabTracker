@@ -3,9 +3,10 @@ import { getDb } from "@/db";
 import { albums, artists, tabs, tracks } from "@/db/schema";
 import { placeholderAlphaTex } from "@/lib/alphatex";
 import { itunesAlbumId, itunesTrackId, userTabId } from "@/lib/ids";
+import type { Instrument } from "@/lib/instrument";
 import { lookupItunesAlbum } from "@/lib/itunes";
 
-export async function ensureItunesAlbum(collectionId: number, userId: string) {
+export async function ensureItunesAlbum(collectionId: number) {
   const lookup = await lookupItunesAlbum(collectionId);
   if (lookup.tracks.length === 0) return null;
 
@@ -80,43 +81,46 @@ export async function ensureItunesAlbum(collectionId: number, userId: string) {
   }
 
   const albumTracks = db.select().from(tracks).where(eq(tracks.albumId, album.id)).all();
-  for (const track of albumTracks) {
-    ensureUserTab(userId, track.id, track.title, artistName);
-  }
-
   return { album, tracks: albumTracks, artistName };
 }
 
-export function ensureUserTab(userId: string, trackId: string, title: string, artistName: string) {
+export function ensureUserTab(
+  userId: string,
+  trackId: string,
+  title: string,
+  artistName: string,
+  instrument: Instrument = "guitar",
+) {
   const db = getDb();
   const existing = db
     .select()
     .from(tabs)
-    .where(and(eq(tabs.userId, userId), eq(tabs.trackId, trackId)))
+    .where(and(eq(tabs.userId, userId), eq(tabs.trackId, trackId), eq(tabs.instrument, instrument)))
     .get();
   if (existing) return existing;
 
-  const id = userTabId(userId, trackId);
+  const id = userTabId(userId, trackId, instrument);
   try {
     db.insert(tabs)
       .values({
         id,
         userId,
         trackId,
+        instrument,
         songsterrId: 0,
         songsterrUrl: "",
-        tabTex: placeholderAlphaTex(title, artistName),
+        tabTex: placeholderAlphaTex(title, artistName, instrument),
         createdAt: new Date().toISOString(),
       })
       .run();
-    return db.select().from(tabs).where(eq(tabs.id, id)).get() ?? { id, userId, trackId };
+    return db.select().from(tabs).where(eq(tabs.id, id)).get() ?? { id, userId, trackId, instrument };
   } catch {
     return (
       db
         .select()
         .from(tabs)
-        .where(and(eq(tabs.userId, userId), eq(tabs.trackId, trackId)))
-        .get() ?? { id, userId, trackId }
+        .where(and(eq(tabs.userId, userId), eq(tabs.trackId, trackId), eq(tabs.instrument, instrument)))
+        .get() ?? { id, userId, trackId, instrument }
     );
   }
 }

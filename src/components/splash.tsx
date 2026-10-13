@@ -41,7 +41,7 @@ export function Splash({
       <div className="relative mx-auto w-full max-w-5xl px-4 pt-16 pb-10 sm:pt-24">
         <p className="text-[11px] tracking-[0.28em] text-gold uppercase">TabShelf</p>
         <h1 className="font-heading mt-3 max-w-3xl text-4xl leading-tight text-balance sm:text-5xl">
-          Your guitar tabs, filed with the records they belong to.
+          Guitar, bass, and drum parts, filed with the records they belong to.
         </h1>
         <p className="mt-4 max-w-2xl text-base text-muted-foreground text-pretty sm:text-lg">
           Search a song, attach each tab to a real album cover, and read the

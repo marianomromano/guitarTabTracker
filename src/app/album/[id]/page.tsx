@@ -7,6 +7,7 @@ import { AppleMusicConnect } from "@/components/apple-music-connect";
 import { AutoFillTabs } from "@/components/auto-fill-tabs";
 import { TrackList } from "@/components/track-list";
 import { requireUserId } from "@/lib/auth";
+import { hasAnyPart } from "@/lib/instrument";
 import { getAlbumWithTracks, getArtistLibrary } from "@/lib/library";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ export default async function AlbumPage({
   }
 
   const { album, tracks } = data;
-  const savedCount = tracks.filter((track) => track.tabId).length;
+  const savedCount = tracks.filter((track) => hasAnyPart(track.parts)).length;
   const artist = await getArtistLibrary(album.artistId, userId);
   const backHref =
     artist && artist.albums.length > 1 ? `/artist/${artist.id}` : "/library";
@@ -63,7 +64,7 @@ export default async function AlbumPage({
         <p className="text-muted-foreground">{album.artistName}</p>
         <p className="mt-1 text-sm text-muted-foreground">
           {album.releaseYear ? `${album.releaseYear} · ` : ""}
-          {savedCount} of {tracks.length} tracks have tabs
+          {savedCount} of {tracks.length} songs on your shelf
         </p>
       </div>
       <div className="lg:pt-10">
@@ -75,13 +76,13 @@ export default async function AlbumPage({
         />
         <AutoFillTabs
           albumId={album.id}
-          missing={tracks.filter((track) => !track.tabId).length}
+          missing={tracks.filter((track) => !track.parts.guitar).length}
         />
         <div className="mt-4 space-y-2">
           <AppleMusicConnect />
           <p className="text-sm text-muted-foreground">
-            The gold guitar opens the tab in the app with alphaTab. Upload a Guitar Pro file to
-            replace the blank staff.
+            Gold G, B, and D open guitar, bass, and drum tabs in the app. Outline letters add that
+            part for this song. Upload a Guitar Pro file to replace the blank staff.
           </p>
         </div>
       </div>

@@ -55,7 +55,13 @@ export function claimDemoTabs(signedInUserId: string, demoUserId: string) {
     const existing = db
       .select({ id: tabs.id })
       .from(tabs)
-      .where(and(eq(tabs.userId, signedInUserId), eq(tabs.trackId, tab.trackId)))
+      .where(
+        and(
+          eq(tabs.userId, signedInUserId),
+          eq(tabs.trackId, tab.trackId),
+          eq(tabs.instrument, tab.instrument),
+        ),
+      )
       .get();
 
     if (existing) continue;
@@ -65,6 +71,7 @@ export function claimDemoTabs(signedInUserId: string, demoUserId: string) {
         id: crypto.randomUUID(),
         userId: signedInUserId,
         trackId: tab.trackId,
+        instrument: tab.instrument,
         songsterrId: tab.songsterrId,
         songsterrUrl: tab.songsterrUrl,
         tabTex: tab.tabTex,

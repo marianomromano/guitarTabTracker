@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Pause, Play } from "lucide-react";
+import { MetronomeControls } from "@/components/metronome-controls";
 import { Button } from "@/components/ui/button";
 import { usePlayer } from "@/components/player-provider";
 
@@ -66,6 +67,7 @@ export function NowPlaying() {
             className="mt-1.5 h-1.5 w-full accent-[var(--gold)]"
             aria-label="Song position"
           />
+          <MetronomeControls />
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           {musicConfigured && !musicAuthorized ? (
@@ -82,8 +84,8 @@ export function NowPlaying() {
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              size="icon"
-              className="bg-gold text-black hover:bg-gold/90"
+              size="icon-lg"
+              className="size-14 rounded-full bg-gold text-black hover:bg-gold/90 md:size-14 [&_svg]:size-7"
               onClick={toggle}
               aria-label={playing ? "Pause" : "Play"}
             >

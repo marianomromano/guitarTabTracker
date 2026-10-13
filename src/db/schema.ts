@@ -47,11 +47,12 @@ export const tabs = sqliteTable(
       .references(() => tracks.id, { onDelete: "cascade" }),
     songsterrId: integer("songsterr_id").notNull(),
     songsterrUrl: text("songsterr_url").notNull(),
+    instrument: text("instrument").notNull().default("guitar"),
     tabTex: text("tab_tex"),
     tabFile: text("tab_file"),
     tabFilename: text("tab_filename"),
     soundsliceHash: text("soundslice_hash"),
     createdAt: text("created_at").notNull(),
   },
-  (table) => [uniqueIndex("tabs_user_track_idx").on(table.userId, table.trackId)],
+  (table) => [uniqueIndex("tabs_user_track_instrument_idx").on(table.userId, table.trackId, table.instrument)],
 );
