@@ -41,19 +41,30 @@ export async function rememberShelfPart(
   trackNumber: number,
   instrument: Instrument,
 ) {
-  if (!Number.isInteger(collectionId) || collectionId <= 0) return;
-  const next = [
-    { collectionId, trackNumber, instrument },
-    ...(await readShelfParts()).filter(
-      (part) =>
-        !(
-          part.collectionId === collectionId &&
-          part.trackNumber === trackNumber &&
-          part.instrument === instrument
-        ),
-    ),
-  ].slice(0, MAX_ENTRIES);
-  await writeShelf(next);
+  await rememberShelfParts([{ collectionId, trackNumber, instrument }]);
+}
+
+export async function rememberShelfParts(parts: ShelfPart[]) {
+  const incoming = parts.filter(
+    (part) => Number.isInteger(part.collectionId) && part.collectionId > 0,
+  );
+  if (incoming.length === 0) return;
+
+  const next = [...incoming];
+  for (const part of await readShelfParts()) {
+    if (
+      next.some(
+        (item) =>
+          item.collectionId === part.collectionId &&
+          item.trackNumber === part.trackNumber &&
+          item.instrument === part.instrument,
+      )
+    ) {
+      continue;
+    }
+    next.push(part);
+  }
+  await writeShelf(next.slice(0, MAX_ENTRIES));
 }
 
 async function writeShelf(parts: ShelfPart[]) {

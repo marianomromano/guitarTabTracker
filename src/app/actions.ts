@@ -31,7 +31,7 @@ import { isAlphaTexFile, isTabFile, placeholderAlphaTex } from "@/lib/alphatex";
 import { ensureItunesAlbum, ensureUserTab } from "@/lib/hydrate";
 import { itunesAlbumId, partTabHref, parseItunesAlbumId, userTabId } from "@/lib/ids";
 import { parseInstrument, parseInstruments } from "@/lib/instrument";
-import { rememberShelfPart } from "@/lib/shelf";
+import { rememberShelfPart, rememberShelfParts } from "@/lib/shelf";
 import { parseSoundsliceHash } from "@/lib/soundslice";
 import { revalidatePath } from "next/cache";
 
@@ -588,33 +588,28 @@ async function linkMissingAlbumTabs(userId: string, albumId: string, artistName:
     .all();
 
   const missing = albumTracks.filter((track) => !track.tabId);
-  let linked = 0;
+  const added: { trackNumber: number }[] = [];
 
-  await mapPool(missing, 4, async (track) => {
+  for (const track of missing) {
     const existing = db
       .select({ id: tabs.id })
       .from(tabs)
       .where(and(eq(tabs.userId, userId), eq(tabs.trackId, track.id), eq(tabs.instrument, "guitar")))
       .get();
-    if (existing) return;
+    if (existing) continue;
     ensureUserTab(userId, track.id, track.title, artistName, "guitar");
-    if (collectionId) {
-      await rememberShelfPart(collectionId, track.trackNumber, "guitar");
-    }
-    linked += 1;
-  });
-
-  return linked;
-}
-
-async function mapPool<T>(items: T[], limit: number, work: (item: T) => Promise<void>) {
-  let index = 0;
-  async function worker() {
-    while (index < items.length) {
-      const current = items[index];
-      index += 1;
-      await work(current);
-    }
+    added.push({ trackNumber: track.trackNumber });
   }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
+
+  if (collectionId && added.length > 0) {
+    await rememberShelfParts(
+      added.map((track) => ({
+        collectionId,
+        trackNumber: track.trackNumber,
+        instrument: "guitar" as const,
+      })),
+    );
+  }
+
+  return added.length;
 }
