@@ -16,6 +16,47 @@ export function songsterrViewUrl(id: number) {
   return `https://www.songsterr.com/a/wa/song?id=${id}`;
 }
 
+export function songsterrEmbedUrl(id: number) {
+  return `https://www.songsterr.com/a/wa/song?id=${id}&inst=0`;
+}
+
+function normalizeName(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\(.*?\)/g, " ")
+    .replace(/\[.*?\]/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function namesMatch(a: string, b: string) {
+  const left = normalizeName(a);
+  const right = normalizeName(b);
+  if (!left || !right) return false;
+  return left === right || left.includes(right) || right.includes(left);
+}
+
+export function pickSongsterrMatch(
+  songs: SongsterrSong[],
+  title: string,
+  artist: string,
+) {
+  const titled = songs.filter((song) => namesMatch(song.title, title));
+  return (
+    titled.find((song) => namesMatch(song.artist, artist)) ??
+    titled[0] ??
+    songs.find((song) => namesMatch(song.artist, artist)) ??
+    null
+  );
+}
+
+export async function findSongsterrTab(artist: string, title: string) {
+  const query = `${artist} ${title}`.trim();
+  if (!query) return null;
+  const songs = await searchSongsterr(query);
+  return pickSongsterrMatch(songs, title, artist);
+}
+
 export async function searchSongsterr(query: string): Promise<SongsterrSong[]> {
   const pattern = query.trim();
   if (!pattern) return [];

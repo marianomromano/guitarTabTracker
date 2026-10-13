@@ -1,5 +1,6 @@
 import { SearchForm } from "@/components/search-form";
 import { SearchResults } from "@/components/search-results";
+import { requireUserId } from "@/lib/auth";
 import { searchSongsterr } from "@/lib/songsterr";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,7 @@ export default async function SearchPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
+  await requireUserId();
   const { q } = await searchParams;
   const query = q?.trim() ?? "";
   let results: Awaited<ReturnType<typeof searchSongsterr>> = [];
@@ -26,7 +28,7 @@ export default async function SearchPage({
       <p className="text-[11px] tracking-[0.28em] text-gold uppercase">Find tabs</p>
       <h1 className="font-heading mt-1 text-3xl">Search Songsterr</h1>
       <p className="mt-2 mb-6 text-muted-foreground">
-        Search a song or artist, then add a tab to its album on your shelf.
+        Search a song or artist, then add the album so every track can get a tab and play in the app.
       </p>
       <SearchForm key={query} initialQuery={query} />
       {searchError ? (

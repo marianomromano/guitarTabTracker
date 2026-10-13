@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, Library } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { AppleMusicConnect } from "@/components/apple-music-connect";
 import { ChangeTabButton } from "@/components/change-tab-button";
-import { TabFrame } from "@/components/tab-frame";
+import { PlayButton } from "@/components/play-button";
+import { TabStage } from "@/components/tab-stage";
+import { resolveTrackMediaAction } from "@/app/actions";
 import { requireUserId } from "@/lib/auth";
 import { getTabForUser } from "@/lib/library";
 
@@ -23,60 +25,57 @@ export default async function TabPage({
     notFound();
   }
 
+  const media = await resolveTrackMediaAction(tab.trackId);
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <header className="z-20 shrink-0 border-b border-white/5 bg-[#12100c]">
-        <div className="flex items-center gap-3 px-3 py-2 sm:px-4">
-          <Link
-            href={`/album/${tab.albumId}`}
-            className="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" />
-            <span className="hidden sm:inline">{tab.albumTitle}</span>
-            <span className="sm:hidden">Album</span>
-          </Link>
-          <Link
-            href="/"
-            className="hidden shrink-0 items-center gap-1 text-sm text-muted-foreground hover:text-foreground sm:inline-flex"
-          >
-            <Library className="size-3.5" />
-            Library
-          </Link>
-          {tab.artworkUrl ? (
-            <Image
-              src={tab.artworkUrl}
-              alt=""
-              width={40}
-              height={40}
-              className="size-10 shrink-0 rounded-sm object-cover ring-1 ring-black/40"
-            />
-          ) : null}
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate font-heading text-base sm:text-lg">
-              {tab.trackTitle}
-            </h1>
-            <p className="truncate text-xs text-muted-foreground">
-              {tab.artistName} · {tab.albumTitle}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <ChangeTabButton
-              size="sm"
-              trackId={tab.trackId}
-              trackTitle={tab.trackTitle}
-              artistName={tab.artistName}
-              currentSongsterrId={tab.songsterrId}
-            />
-            <Button asChild size="sm" className="bg-gold text-black hover:bg-gold/90">
-              <a href={tab.songsterrUrl} target="_blank" rel="noreferrer">
-                Open on Songsterr
-                <ExternalLink />
-              </a>
-            </Button>
-          </div>
+    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-6">
+      <Link
+        href={`/album/${tab.albumId}`}
+        className="mb-4 inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        {tab.albumTitle}
+      </Link>
+      <div className="mb-6 flex flex-wrap items-center gap-4">
+        {tab.artworkUrl ? (
+          <Image
+            src={tab.artworkUrl}
+            alt={`${tab.albumTitle} cover`}
+            width={72}
+            height={72}
+            className="size-16 rounded-md object-cover shadow-2xl ring-1 ring-black/40"
+          />
+        ) : null}
+        <div className="min-w-0 flex-1">
+          <h1 className="font-heading text-2xl sm:text-3xl">{tab.trackTitle}</h1>
+          <p className="text-sm text-muted-foreground">
+            {tab.artistName} · {tab.albumTitle}
+          </p>
         </div>
-      </header>
-      <TabFrame src={tab.songsterrUrl} title={`${tab.trackTitle} tab`} />
+        <div className="flex flex-wrap items-center gap-2">
+          <PlayButton
+            size="lg"
+            track={{
+              id: tab.trackId,
+              title: tab.trackTitle,
+              artist: tab.artistName,
+              artworkUrl: tab.artworkUrl,
+              previewUrl: media?.previewUrl ?? tab.previewUrl,
+              appleMusicId: media?.appleMusicId ?? tab.appleMusicId,
+            }}
+          />
+          <ChangeTabButton
+            trackId={tab.trackId}
+            trackTitle={tab.trackTitle}
+            artistName={tab.artistName}
+            currentSongsterrId={tab.songsterrId}
+          />
+        </div>
+      </div>
+      <div className="mb-4">
+        <AppleMusicConnect />
+      </div>
+      <TabStage songsterrUrl={tab.songsterrUrl} title={tab.trackTitle} />
     </div>
   );
 }

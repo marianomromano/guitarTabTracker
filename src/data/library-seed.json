@@ -1,0 +1,670 @@
+{
+  "artists": [
+    {
+      "id": "babc1c95-16bb-4cd6-8b06-d99310d1a263",
+      "name": "Led Zeppelin",
+      "itunesArtistId": "994656"
+    },
+    {
+      "id": "53f42fa2-0ecb-4064-91b7-03c925886bb5",
+      "name": "Living Colour",
+      "itunesArtistId": "517236"
+    },
+    {
+      "id": "79ab60ff-6e79-4b10-8f1b-58d208ae16e9",
+      "name": "Pearl Jam",
+      "itunesArtistId": "467464"
+    },
+    {
+      "id": "41d95a62-33af-46d4-b70f-bd85d33b9d2c",
+      "name": "Dave Matthews Band",
+      "itunesArtistId": "60288452"
+    },
+    {
+      "id": "89e50e63-7cdc-437e-aef9-1d5bdabc99e4",
+      "name": "Matchbox Twenty",
+      "itunesArtistId": "711111"
+    },
+    {
+      "id": "99c3923b-afda-440d-825a-6838e68b6a2c",
+      "name": "Metallica",
+      "itunesArtistId": "3996865"
+    }
+  ],
+  "albums": [
+    {
+      "id": "5b266f36-10f1-4648-925d-723dcbd312d6",
+      "artistId": "babc1c95-16bb-4cd6-8b06-d99310d1a263",
+      "title": "Led Zeppelin IV (Remastered)",
+      "itunesCollectionId": "580708175",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/5c/15/9b/5c159b27-95ca-b9a7-84e3-28e795fffd39/dj.kvkrpptq.jpg/600x600bb.jpg",
+      "releaseYear": 1971
+    },
+    {
+      "id": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "artistId": "53f42fa2-0ecb-4064-91b7-03c925886bb5",
+      "title": "Vivid (2023 Remaster)",
+      "itunesCollectionId": "273290580",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/e5/db/b4/e5dbb437-e4a0-ee47-d08c-58adf1379192/5099746075828.jpg/600x600bb.jpg",
+      "releaseYear": 1988
+    },
+    {
+      "id": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "artistId": "79ab60ff-6e79-4b10-8f1b-58d208ae16e9",
+      "title": "Ten",
+      "itunesCollectionId": "425465247",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/e0/e1/7c/e0e17cf0-62e5-6312-f3df-2462960cc8f1/884977724745.jpg/600x600bb.jpg",
+      "releaseYear": 1991
+    },
+    {
+      "id": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "artistId": "79ab60ff-6e79-4b10-8f1b-58d208ae16e9",
+      "title": "Vs.",
+      "itunesCollectionId": "426656353",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/60/a1/f7/60a1f7ee-72d8-0096-ac20-fe9c453211c7/dj.nyndmalc.jpg/600x600bb.jpg",
+      "releaseYear": 1993
+    },
+    {
+      "id": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "artistId": "41d95a62-33af-46d4-b70f-bd85d33b9d2c",
+      "title": "Under the Table and Dreaming",
+      "itunesCollectionId": "308261232",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/a5/15/0a/a5150ad3-729a-2ba4-d803-1fc5fec7758d/888880620392.jpg/600x600bb.jpg",
+      "releaseYear": 1994
+    },
+    {
+      "id": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "artistId": "89e50e63-7cdc-437e-aef9-1d5bdabc99e4",
+      "title": "Yourself or Someone Like You",
+      "itunesCollectionId": "580695794",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/be/24/30/be243026-a149-dc9d-ef3b-d01fef6da03f/075679957535.jpg/600x600bb.jpg",
+      "releaseYear": 1996
+    },
+    {
+      "id": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "artistId": "99c3923b-afda-440d-825a-6838e68b6a2c",
+      "title": "Metallica (Remastered)",
+      "itunesCollectionId": "1572046434",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/9e/80/1b/9e801b06-67fa-0990-2d15-85480ad3cd46/850007452025.png/600x600bb.jpg",
+      "releaseYear": 1991
+    }
+  ],
+  "tracks": [
+    {
+      "id": "614f61da-91e3-45c5-8dd2-11c80ea0028f",
+      "albumId": "5b266f36-10f1-4648-925d-723dcbd312d6",
+      "title": "Black Dog",
+      "trackNumber": 1
+    },
+    {
+      "id": "59ef0a2f-4278-445a-adb7-b7c6cf38a407",
+      "albumId": "5b266f36-10f1-4648-925d-723dcbd312d6",
+      "title": "Rock and Roll",
+      "trackNumber": 2
+    },
+    {
+      "id": "8d88c88d-ce07-4ba6-be90-3a6487055fb7",
+      "albumId": "5b266f36-10f1-4648-925d-723dcbd312d6",
+      "title": "The Battle of Evermore",
+      "trackNumber": 3
+    },
+    {
+      "id": "24baf7cb-8f2b-4548-9089-7ab6d9d952bb",
+      "albumId": "5b266f36-10f1-4648-925d-723dcbd312d6",
+      "title": "Stairway to Heaven",
+      "trackNumber": 4
+    },
+    {
+      "id": "2f0e9bd8-ce67-4ec9-85c3-c663bc7012db",
+      "albumId": "5b266f36-10f1-4648-925d-723dcbd312d6",
+      "title": "Misty Mountain Hop",
+      "trackNumber": 5
+    },
+    {
+      "id": "d09537bb-7634-4d88-b890-02516d6bc87b",
+      "albumId": "5b266f36-10f1-4648-925d-723dcbd312d6",
+      "title": "Four Sticks",
+      "trackNumber": 6
+    },
+    {
+      "id": "8f25e94e-8c4e-4617-98b2-241d27833447",
+      "albumId": "5b266f36-10f1-4648-925d-723dcbd312d6",
+      "title": "Going to California",
+      "trackNumber": 7
+    },
+    {
+      "id": "357da33e-7b95-4ff2-ae5c-90e54157822c",
+      "albumId": "5b266f36-10f1-4648-925d-723dcbd312d6",
+      "title": "When the Levee Breaks",
+      "trackNumber": 8
+    },
+    {
+      "id": "8a85512e-6b12-4ffd-bc3f-5f92353e5b31",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "Cult of Personality (2023 Remaster)",
+      "trackNumber": 1
+    },
+    {
+      "id": "942b040f-76f8-4ba3-a72a-c3d7de061d6f",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "I Want to Know (2023 Remaster)",
+      "trackNumber": 2
+    },
+    {
+      "id": "0d730e74-7848-45ca-bccf-af552495f456",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "Middle Man (2023 Remaster)",
+      "trackNumber": 3
+    },
+    {
+      "id": "a934f0cf-4975-4a9c-8c11-5c508d6bb366",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "Desperate People (2023 Remaster)",
+      "trackNumber": 4
+    },
+    {
+      "id": "0279c8a0-1b11-442f-848c-1c9d3c115ee7",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "Open Letter (To a Landord) [2023 Remaster]",
+      "trackNumber": 5
+    },
+    {
+      "id": "27353f5c-8f28-45a8-a3c8-750c82902647",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "Funny Vibe (2023 Remaster)",
+      "trackNumber": 6
+    },
+    {
+      "id": "1fe99aaa-44b6-443f-a8f9-637550171f60",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "Memories Can't Wait (2023 Remaster)",
+      "trackNumber": 7
+    },
+    {
+      "id": "e28678e2-a8f4-4de6-a2ae-578ab916870b",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "Broken Hearts (2023 Remaster)",
+      "trackNumber": 8
+    },
+    {
+      "id": "d3f5602b-a8c0-4fb3-9a37-301fda3d7a7f",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "Glamour Boys (2023 Remaster)",
+      "trackNumber": 9
+    },
+    {
+      "id": "2e84f9f4-a939-4fe4-83d0-80060ff0bd0a",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "What's Your Favorite Color? (2023 Remaster)",
+      "trackNumber": 10
+    },
+    {
+      "id": "58a36e3a-597a-48d1-84fb-7c796056142f",
+      "albumId": "ed57cc63-41d4-4588-ac8e-496d23cd6988",
+      "title": "Which Way to America (2023 Remaster)",
+      "trackNumber": 11
+    },
+    {
+      "id": "fdd80bdf-3eea-4d36-9674-da4877c3cf0f",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Once",
+      "trackNumber": 1
+    },
+    {
+      "id": "67c07490-649e-4ef8-af7d-8af4104f4447",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Even Flow",
+      "trackNumber": 2
+    },
+    {
+      "id": "b1b5aa1a-dbd4-424c-b67e-96d91a0c8d98",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Alive",
+      "trackNumber": 3
+    },
+    {
+      "id": "96e6e0a7-9f91-4d0c-8d8f-eab6f74a9191",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Why Go",
+      "trackNumber": 4
+    },
+    {
+      "id": "b3e773e7-1d77-4c6d-af7d-697684f5d28a",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Black",
+      "trackNumber": 5
+    },
+    {
+      "id": "a1588238-7009-4e72-9724-280606f18fac",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Jeremy",
+      "trackNumber": 6
+    },
+    {
+      "id": "64f5c14b-3513-4955-833d-15dc5bbd446c",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Oceans",
+      "trackNumber": 7
+    },
+    {
+      "id": "14a6bf2e-4beb-4d75-bb56-8fc0abea64f5",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Porch",
+      "trackNumber": 8
+    },
+    {
+      "id": "5a9f2a91-5b6d-4c12-a16e-47e46508a255",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Garden",
+      "trackNumber": 9
+    },
+    {
+      "id": "e7166d90-bf81-4d65-8e64-c9827b837c9c",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Deep",
+      "trackNumber": 10
+    },
+    {
+      "id": "2b04e0d2-538c-4615-9999-8401ee471148",
+      "albumId": "ba80dd39-a25d-4fef-bbe8-605a2fa93969",
+      "title": "Release",
+      "trackNumber": 11
+    },
+    {
+      "id": "f65188dd-307a-4a9b-9dd8-6762c800af98",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Go (Remastered)",
+      "trackNumber": 1
+    },
+    {
+      "id": "ea8f42fa-9988-4bf9-aeff-a0fd329023b1",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Animal (Remastered)",
+      "trackNumber": 2
+    },
+    {
+      "id": "450bc521-5c21-49cb-9697-351776c4a9c7",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Daughter (Remastered)",
+      "trackNumber": 3
+    },
+    {
+      "id": "4871bfa3-180c-4afb-8846-4b136811ef6f",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Glorified G (Remastered)",
+      "trackNumber": 4
+    },
+    {
+      "id": "0878ad52-6be6-4490-8331-d2889759dd2d",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Dissident (Remastered)",
+      "trackNumber": 5
+    },
+    {
+      "id": "fb9a7da5-bcf4-4198-bf4d-32e2753b56e8",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "W.M.A. (Remastered)",
+      "trackNumber": 6
+    },
+    {
+      "id": "aa4fd4b8-d1ab-430e-807e-28384b7324d9",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Blood (Remastered)",
+      "trackNumber": 7
+    },
+    {
+      "id": "c8ab10e2-9dc5-4dd7-b687-37fd3db365fa",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Rearviewmirror (Remastered)",
+      "trackNumber": 8
+    },
+    {
+      "id": "ac72cf09-e926-4e54-b07b-6f15d814e6c4",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Rats (Remastered)",
+      "trackNumber": 9
+    },
+    {
+      "id": "1fbcc8c6-271e-40ef-907e-329fb3dd191c",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Elderly Woman Behind the Counter in a Small Town (Remastered)",
+      "trackNumber": 10
+    },
+    {
+      "id": "079dd4eb-04c8-4ac6-ac77-df572b9af482",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Leash (Remastered)",
+      "trackNumber": 11
+    },
+    {
+      "id": "8bdbde8d-e1d5-4d14-8eaf-f8d57458ac64",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Indifference (Remastered)",
+      "trackNumber": 12
+    },
+    {
+      "id": "ed2f97a0-acc6-4e25-beda-ff56e4848fb7",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Hold On (bonus track)",
+      "trackNumber": 13
+    },
+    {
+      "id": "66ea4f7d-4764-4805-a492-6a3d9c01e344",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Cready Stomp (bonus track)",
+      "trackNumber": 14
+    },
+    {
+      "id": "41435748-c443-4f44-955a-6c029424a83c",
+      "albumId": "82ac29bc-5c26-4760-95e3-43bef96baa81",
+      "title": "Crazy Mary (Remastered)",
+      "trackNumber": 15
+    },
+    {
+      "id": "1538bd1d-ba86-4ba8-915b-de28cd861338",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "The Best of What's Around",
+      "trackNumber": 1
+    },
+    {
+      "id": "2e9b34ee-ab67-4765-82ec-c0c4c2a4b50c",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "What Would You Say",
+      "trackNumber": 2
+    },
+    {
+      "id": "6bc67e4f-d8e4-4602-b715-d518a02b3827",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "Satellite",
+      "trackNumber": 3
+    },
+    {
+      "id": "d74f1f71-f857-4bfb-8ee4-9549a6448611",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "Rhyme & Reason",
+      "trackNumber": 4
+    },
+    {
+      "id": "e2cdbfc9-c021-4e67-b526-b0f198e9a79f",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "Typical Situation",
+      "trackNumber": 5
+    },
+    {
+      "id": "15bc305d-6f53-4437-9d5c-32220f6d9774",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "Dancing Nancies",
+      "trackNumber": 6
+    },
+    {
+      "id": "d72b4bd4-0bf2-48f5-8b0b-71137c164f8e",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "Ants Marching",
+      "trackNumber": 7
+    },
+    {
+      "id": "95e1b189-249e-4e10-b55d-a5361e5197b3",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "Lover Lay Down",
+      "trackNumber": 8
+    },
+    {
+      "id": "23d6e1dc-12e6-4a98-8ab9-4a11b8ea0edd",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "Jimi Thing",
+      "trackNumber": 9
+    },
+    {
+      "id": "f471a735-fa46-44ba-930e-0c93bac1d0c7",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "Warehouse",
+      "trackNumber": 10
+    },
+    {
+      "id": "454a7b39-59d6-4d76-9e63-1e70c2a7de32",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "Pay for What You Get",
+      "trackNumber": 11
+    },
+    {
+      "id": "433a803e-980e-425b-972b-f3aaf78945fe",
+      "albumId": "26bc2ab0-a974-4598-86a1-000226ac925d",
+      "title": "#34",
+      "trackNumber": 12
+    },
+    {
+      "id": "28506b57-9407-4f97-b877-12fa38381df4",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Real World",
+      "trackNumber": 1
+    },
+    {
+      "id": "1af34c11-adf0-4c1d-827a-82f90e8042bd",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Long Day",
+      "trackNumber": 2
+    },
+    {
+      "id": "6904748d-5c00-4f1e-b4b5-130c0516b29e",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "3 am",
+      "trackNumber": 3
+    },
+    {
+      "id": "edc91bc6-4fd1-4d26-ba9e-efc2d1d7186b",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Push",
+      "trackNumber": 4
+    },
+    {
+      "id": "d3661070-187d-4ddd-8911-0a2a0bec4918",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Girl Like That",
+      "trackNumber": 5
+    },
+    {
+      "id": "b17bfb65-5e5a-4e25-8b59-e336b770128f",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Back 2 Good",
+      "trackNumber": 6
+    },
+    {
+      "id": "96b6adb2-2644-46d3-a9bb-7ace101b8a95",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Damn",
+      "trackNumber": 7
+    },
+    {
+      "id": "2f89892d-d3b7-449f-9a9b-9c70615788ed",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Argue",
+      "trackNumber": 8
+    },
+    {
+      "id": "0065920b-2fce-4ff2-9590-c4b8badeb69d",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Kody",
+      "trackNumber": 9
+    },
+    {
+      "id": "d6d6ba31-353b-46e8-974d-6ddff79e67f1",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Busted",
+      "trackNumber": 10
+    },
+    {
+      "id": "6c482921-a215-46f2-8d53-586dc0076678",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Shame",
+      "trackNumber": 11
+    },
+    {
+      "id": "e4e36aeb-0387-44ed-b047-f1d28be56013",
+      "albumId": "ee0ab406-98dc-40f1-84d3-cc9a0a992924",
+      "title": "Hang",
+      "trackNumber": 12
+    },
+    {
+      "id": "9c37362b-6363-47be-9216-bf14037bcbe1",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "Enter Sandman",
+      "trackNumber": 1
+    },
+    {
+      "id": "f375a950-3f92-4f90-8803-c874c6a72bb7",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "Sad But True",
+      "trackNumber": 2
+    },
+    {
+      "id": "b15fdfbc-f705-4cd0-b5cb-650fb0c2b468",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "Holier Than Thou",
+      "trackNumber": 3
+    },
+    {
+      "id": "5b1ed50c-bc9c-455c-906a-4978f2fdcbc4",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "The Unforgiven",
+      "trackNumber": 4
+    },
+    {
+      "id": "4c99aada-707d-4100-a9b5-e2748640fef6",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "Wherever I May Roam",
+      "trackNumber": 5
+    },
+    {
+      "id": "618d9d46-b328-48e7-92e4-2f5a6246fff6",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "Don't Tread On Me",
+      "trackNumber": 6
+    },
+    {
+      "id": "231ff611-c55f-4f3e-aa1b-13b9de0c6f8d",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "Through the Never",
+      "trackNumber": 7
+    },
+    {
+      "id": "8483fb66-083d-409f-8e6f-af0bbf1dd0c5",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "Nothing Else Matters",
+      "trackNumber": 8
+    },
+    {
+      "id": "689410dd-dbaa-4533-ab5e-f7076f65c147",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "Of Wolf and Man",
+      "trackNumber": 9
+    },
+    {
+      "id": "68bc29de-ba2e-495c-b606-4a99ec21a7c8",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "The God That Failed",
+      "trackNumber": 10
+    },
+    {
+      "id": "9e34b559-fcd7-428e-bb4d-3792e64a4a13",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "My Friend of Misery",
+      "trackNumber": 11
+    },
+    {
+      "id": "ba55b6b5-edd6-4bb1-9781-d50e85b93542",
+      "albumId": "23b940bc-95fd-4c2f-8598-6ac644990e82",
+      "title": "The Struggle Within",
+      "trackNumber": 12
+    }
+  ],
+  "tabs": [
+    {
+      "id": "e1bb5712-4ab8-4ae0-87dd-73cbbf330549",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "1fbcc8c6-271e-40ef-907e-329fb3dd191c",
+      "songsterrId": 15348,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=15348",
+      "createdAt": "2026-09-02T12:41:46.031Z"
+    },
+    {
+      "id": "0e5c4389-ad79-410d-a318-d1af74de6555",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "24baf7cb-8f2b-4548-9089-7ab6d9d952bb",
+      "songsterrId": 27,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=27",
+      "createdAt": "2026-09-02T12:09:03.610Z"
+    },
+    {
+      "id": "f268a703-4639-410d-85e3-4190f7a5c711",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "2f0e9bd8-ce67-4ec9-85c3-c663bc7012db",
+      "songsterrId": 22700,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=22700",
+      "createdAt": "2026-09-02T12:27:44.406Z"
+    },
+    {
+      "id": "20f959e0-a746-41c9-afa1-b5e60b54f49d",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "614f61da-91e3-45c5-8dd2-11c80ea0028f",
+      "songsterrId": 363,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=363",
+      "createdAt": "2026-09-02T12:18:42.721Z"
+    },
+    {
+      "id": "865d0b5f-9000-44f1-8feb-bde6017859fa",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "6bc67e4f-d8e4-4602-b715-d518a02b3827",
+      "songsterrId": 29013,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=29013",
+      "createdAt": "2026-09-02T17:49:33.922Z"
+    },
+    {
+      "id": "7fe425f0-ac26-45f6-826f-db3aff40d66c",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "8a85512e-6b12-4ffd-bc3f-5f92353e5b31",
+      "songsterrId": 23625,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=23625",
+      "createdAt": "2026-09-02T12:15:14.676Z"
+    },
+    {
+      "id": "a570eed3-7fd5-4ac4-8f0d-f891a43e129c",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "b1b5aa1a-dbd4-424c-b67e-96d91a0c8d98",
+      "songsterrId": 489,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=489",
+      "createdAt": "2026-09-02T12:29:12.515Z"
+    },
+    {
+      "id": "fe34f32f-5dd3-4bc0-bf52-1dd962ac76d8",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "d72b4bd4-0bf2-48f5-8b0b-71137c164f8e",
+      "songsterrId": 399511,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=399511",
+      "createdAt": "2026-09-02T17:50:59.326Z"
+    },
+    {
+      "id": "e74a0588-0cf0-4b05-bd6c-fcac6961e5ae",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "edc91bc6-4fd1-4d26-ba9e-efc2d1d7186b",
+      "songsterrId": 13275,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=13275",
+      "createdAt": "2026-09-10T15:52:31.201Z"
+    },
+    {
+      "id": "dc0e820b-52b5-47bd-b414-dcbdba06c5a1",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "f375a950-3f92-4f90-8803-c874c6a72bb7",
+      "songsterrId": 317,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=317",
+      "createdAt": "2026-09-22T02:08:14.727Z"
+    },
+    {
+      "id": "135d1dc6-53e3-49d2-bc73-1700046f1691",
+      "userId": "user_3J8vUbeTly42OCV8LHmiMiJSKEU",
+      "trackId": "b15fdfbc-f705-4cd0-b5cb-650fb0c2b468",
+      "songsterrId": 6719,
+      "songsterrUrl": "https://www.songsterr.com/a/wa/song?id=6719",
+      "createdAt": "2026-09-22T02:08:31.778Z"
+    }
+  ]
+}

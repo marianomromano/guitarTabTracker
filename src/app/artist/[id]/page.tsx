@@ -23,8 +23,8 @@ export default async function ArtistPage({
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
       <Link
-        href="/"
-        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        href="/library"
+        className="mb-6 inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Library

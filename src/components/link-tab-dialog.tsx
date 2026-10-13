@@ -100,15 +100,15 @@ export function LinkTabDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSearch} className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-input bg-black/20 px-3 md:min-h-8 md:px-2.5">
+            <Search className="size-4 shrink-0 text-muted-foreground md:size-3.5" />
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Song or artist"
-              className="bg-black/20 pl-8"
+              className="h-full border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 dark:bg-transparent"
             />
-          </div>
+          </label>
           <Button type="submit" disabled={searching} className="bg-gold text-black hover:bg-gold/90">
             {searching ? "Searching..." : "Search"}
           </Button>
@@ -128,7 +128,7 @@ export function LinkTabDialog({
                   type="button"
                   disabled={linking}
                   onClick={() => choose(song)}
-                  className="flex items-start justify-between gap-3 rounded-lg p-2 text-left hover:bg-white/5 disabled:opacity-60"
+                  className="flex min-h-14 items-start justify-between gap-3 rounded-lg p-3 text-left active:bg-white/10 hover:bg-white/5 disabled:opacity-60"
                 >
                   <span>
                     <span className="block text-sm">{song.title}</span>

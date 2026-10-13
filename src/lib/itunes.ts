@@ -11,6 +11,8 @@ export type ItunesTrack = {
   trackName: string;
   trackNumber: number;
   discNumber: number;
+  previewUrl: string | null;
+  appleMusicId: string | null;
 };
 
 type ItunesResult = {
@@ -26,6 +28,8 @@ type ItunesResult = {
   trackCount?: number;
   releaseDate?: string;
   artworkUrl100?: string;
+  previewUrl?: string;
+  trackId?: number;
 };
 
 function hiResArtwork(url: string | undefined) {
@@ -140,8 +144,36 @@ export async function lookupItunesAlbum(collectionId: number) {
       trackName: song.trackName ?? "Untitled",
       trackNumber: song.trackNumber ?? 0,
       discNumber: song.discNumber ?? 1,
+      previewUrl: song.previewUrl ?? null,
+      appleMusicId: song.trackId ? String(song.trackId) : null,
     }))
     .sort((a, b) => a.discNumber - b.discNumber || a.trackNumber - b.trackNumber);
 
   return { album, tracks, artistId: collection?.artistId ?? songs[0]?.artistId };
+}
+
+export async function searchItunesSong(artist: string, title: string, albumTitle?: string) {
+  const url = new URL("https://itunes.apple.com/search");
+  url.searchParams.set("term", `${artist} ${title} ${albumTitle ?? ""}`.trim());
+  url.searchParams.set("entity", "song");
+  url.searchParams.set("limit", "10");
+
+  const results = await itunesJson(url);
+  const match =
+    results.find(
+      (result) =>
+        result.kind === "song" &&
+        result.trackName &&
+        titlesMatch(result.trackName, title),
+    ) ?? results.find((result) => result.kind === "song");
+
+  return {
+    previewUrl: match?.previewUrl ?? null,
+    appleMusicId: match?.trackId ? String(match.trackId) : null,
+  };
+}
+
+export async function searchItunesPreview(artist: string, title: string, albumTitle?: string) {
+  const song = await searchItunesSong(artist, title, albumTitle);
+  return song.previewUrl;
 }

@@ -1,0 +1,69 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { Pause, Play } from "lucide-react";
+import { resolveTrackMediaAction } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { usePlayer, type PlayableTrack } from "@/components/player-provider";
+
+export function PlayButton({
+  track,
+  size = "icon-sm",
+}: {
+  track: Omit<PlayableTrack, "previewUrl" | "appleMusicId"> & {
+    previewUrl: string | null;
+    appleMusicId?: string | null;
+  };
+  size?: "icon-sm" | "icon" | "lg";
+}) {
+  const { track: current, playing, play, toggle } = usePlayer();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState(false);
+  const active = current?.id === track.id;
+
+  function start() {
+    setError(false);
+    if (active) {
+      toggle();
+      return;
+    }
+    if (track.appleMusicId || track.previewUrl) {
+      void play({
+        ...track,
+        previewUrl: track.previewUrl,
+        appleMusicId: track.appleMusicId ?? null,
+      });
+      return;
+    }
+    startTransition(async () => {
+      const media = await resolveTrackMediaAction(track.id);
+      if (!media?.appleMusicId && !media?.previewUrl) {
+        setError(true);
+        return;
+      }
+      await play({
+        ...track,
+        previewUrl: media.previewUrl,
+        appleMusicId: media.appleMusicId,
+      });
+    });
+  }
+
+  return (
+    <span className="inline-flex flex-col items-center">
+      <Button
+        type="button"
+        size={size}
+        variant={active ? "default" : "outline"}
+        className={active ? "bg-gold text-black hover:bg-gold/90" : "border-white/15"}
+        onClick={start}
+        disabled={pending}
+        aria-label={active && playing ? `Pause ${track.title}` : `Play ${track.title}`}
+      >
+        {active && playing ? <Pause /> : <Play />}
+        {size === "lg" ? (pending ? "Loading…" : active && playing ? "Pause" : "Play song") : null}
+      </Button>
+      {error ? <span className="mt-1 text-[10px] text-destructive">No song found</span> : null}
+    </span>
+  );
+}

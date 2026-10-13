@@ -1,20 +1,55 @@
+import { cache } from "react";
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { isClerkConfigured } from "@/lib/auth-config";
+import { readDemoUserId } from "@/lib/demo";
 
-export function isClerkConfigured() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
-      process.env.CLERK_SECRET_KEY,
-  );
-}
+export { isClerkConfigured } from "@/lib/auth-config";
+
+export type Session = {
+  userId: string | null;
+  isSignedIn: boolean;
+  isDemo: boolean;
+  clerkEnabled: boolean;
+};
+
+export const getSession = cache(async (): Promise<Session> => {
+  const clerkEnabled = isClerkConfigured();
+
+  if (clerkEnabled) {
+    const { userId } = await auth();
+    if (userId) {
+      return {
+        userId,
+        isSignedIn: true,
+        isDemo: false,
+        clerkEnabled,
+      };
+    }
+  }
+
+  const demoUserId = await readDemoUserId();
+  if (demoUserId) {
+    return {
+      userId: demoUserId,
+      isSignedIn: false,
+      isDemo: true,
+      clerkEnabled,
+    };
+  }
+
+  return {
+    userId: null,
+    isSignedIn: false,
+    isDemo: false,
+    clerkEnabled,
+  };
+});
 
 export async function requireUserId() {
-  if (!isClerkConfigured()) {
-    return "local-dev";
+  const session = await getSession();
+  if (!session.userId) {
+    redirect("/");
   }
-
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
-  return userId;
+  return session.userId;
 }

@@ -54,9 +54,9 @@ export function AddTabButton({ song }: { song: SongsterrSong }) {
         size="sm"
         onClick={() => save()}
         disabled={pending}
-        className="bg-gold text-black hover:bg-gold/90"
+        className="w-full bg-gold text-black hover:bg-gold/90 sm:w-auto"
       >
-        {pending ? "Adding..." : "Add to library"}
+        {pending ? "Adding tabs..." : "Add album tabs"}
       </Button>
       {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
 
@@ -75,7 +75,7 @@ export function AddTabButton({ song }: { song: SongsterrSong }) {
                 type="button"
                 disabled={pending}
                 onClick={() => save(album.collectionId)}
-                className="flex items-center gap-3 rounded-lg p-2 text-left hover:bg-white/5"
+                className="flex min-h-16 items-center gap-3 rounded-lg p-3 text-left active:bg-white/10 hover:bg-white/5"
               >
                 {album.artworkUrl ? (
                   <Image

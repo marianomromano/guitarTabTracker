@@ -32,6 +32,9 @@ export const tracks = sqliteTable("tracks", {
     .references(() => albums.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   trackNumber: integer("track_number").notNull(),
+  previewUrl: text("preview_url"),
+  youtubeVideoId: text("youtube_video_id"),
+  appleMusicId: text("apple_music_id"),
 });
 
 export const tabs = sqliteTable(

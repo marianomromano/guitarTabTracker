@@ -100,6 +100,7 @@ export function getAlbumWithTracks(albumId: string, userId: string) {
       title: albums.title,
       artworkUrl: albums.artworkUrl,
       releaseYear: albums.releaseYear,
+      itunesCollectionId: albums.itunesCollectionId,
       artistId: artists.id,
       artistName: artists.name,
     })
@@ -115,6 +116,8 @@ export function getAlbumWithTracks(albumId: string, userId: string) {
       id: tracks.id,
       title: tracks.title,
       trackNumber: tracks.trackNumber,
+      previewUrl: tracks.previewUrl,
+      appleMusicId: tracks.appleMusicId,
       tabId: tabs.id,
       songsterrId: tabs.songsterrId,
     })
@@ -137,6 +140,8 @@ export function getTabForUser(tabId: string, userId: string) {
       songsterrUrl: tabs.songsterrUrl,
       trackTitle: tracks.title,
       trackNumber: tracks.trackNumber,
+      previewUrl: tracks.previewUrl,
+      appleMusicId: tracks.appleMusicId,
       albumId: albums.id,
       albumTitle: albums.title,
       artworkUrl: albums.artworkUrl,

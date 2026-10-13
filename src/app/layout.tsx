@@ -1,8 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Nav } from "@/components/nav";
-import { isClerkConfigured } from "@/lib/auth";
+import { NowPlaying } from "@/components/now-playing";
+import { PlayerProvider } from "@/components/player-provider";
+import { getSession } from "@/lib/auth";
+import { clerkAppearance } from "@/lib/clerk-appearance";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,27 +19,57 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
   title: "TabShelf",
   description: "Find guitar tabs and keep them on a bookshelf of albums.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
-  const clerkEnabled = isClerkConfigured();
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const session = await getSession();
   const tree = (
     <html
       lang="en"
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex h-full min-h-full flex-col bg-background text-foreground">
-        <Nav clerkEnabled={clerkEnabled} />
-        <main className="flex min-h-0 flex-1 flex-col">{children}</main>
+        <Script
+          src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"
+          strategy="afterInteractive"
+          data-web-components=""
+        />
+        <PlayerProvider>
+          <Nav
+            clerkEnabled={session.clerkEnabled}
+            isSignedIn={session.isSignedIn}
+            isDemo={session.isDemo}
+          />
+          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            {children}
+          </main>
+          <NowPlaying />
+        </PlayerProvider>
       </body>
     </html>
   );
 
-  if (clerkEnabled) {
-    return <ClerkProvider>{tree}</ClerkProvider>;
+  if (session.clerkEnabled) {
+    return (
+      <ClerkProvider
+        appearance={clerkAppearance}
+        signInUrl="/sign-in"
+        signUpUrl="/sign-up"
+        signInFallbackRedirectUrl="/library"
+        signUpFallbackRedirectUrl="/library"
+      >
+        {tree}
+      </ClerkProvider>
+    );
   }
 
   return tree;

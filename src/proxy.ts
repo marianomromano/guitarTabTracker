@@ -1,20 +1,15 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { isClerkConfigured } from "@/lib/auth";
+import { isClerkConfigured } from "@/lib/auth-config";
 
-const clerkProxy = clerkMiddleware(async (auth, req) => {
-  const path = req.nextUrl.pathname;
-  if (path.startsWith("/sign-in") || path.startsWith("/sign-up")) {
-    return;
+const clerkProxy = clerkMiddleware();
+
+export default function proxy(...args: Parameters<typeof clerkProxy>) {
+  if (!isClerkConfigured()) {
+    return NextResponse.next();
   }
-  await auth.protect();
-});
-
-export default isClerkConfigured()
-  ? clerkProxy
-  : function proxy() {
-      return NextResponse.next();
-    };
+  return clerkProxy(...args);
+}
 
 export const config = {
   matcher: [

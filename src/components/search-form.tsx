@@ -18,16 +18,17 @@ export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
 
   return (
     <form onSubmit={onSubmit} className="mb-8 flex gap-2">
-      <div className="relative flex-1">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+      <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-input bg-black/20 px-3 md:min-h-8 md:px-2.5">
+        <Search className="size-4 shrink-0 text-muted-foreground md:size-3.5" />
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Song or artist"
-          className="h-10 bg-black/20 pl-8"
+          className="h-full border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 dark:bg-transparent"
+          enterKeyHint="search"
         />
-      </div>
-      <Button type="submit" className="h-10 bg-gold text-black hover:bg-gold/90">
+      </label>
+      <Button type="submit" className="bg-gold text-black hover:bg-gold/90">
         Search
       </Button>
     </form>

@@ -129,6 +129,31 @@
   }
   html {
     @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}
+
+body:has([data-app-nav]) main {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+body:has([data-now-playing]) main {
+  padding-bottom: 8.5rem;
+}
+
+body:has([data-app-nav]):has([data-now-playing]) main {
+  padding-bottom: calc(13.5rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  body:has([data-app-nav]) main {
+    padding-bottom: 0;
+  }
+
+  body:has([data-now-playing]) main,
+  body:has([data-app-nav]):has([data-now-playing]) main {
+    padding-bottom: 8.5rem;
   }
 }
 

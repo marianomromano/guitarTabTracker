@@ -2,10 +2,16 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+import seed from "@/data/library-seed.json";
 import * as schema from "./schema";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_PATH = path.join(DATA_DIR, "library.db");
+function resolveDbPath() {
+  if (process.env.VERCEL) {
+    // The deployment filesystem is read-only except /tmp.
+    return path.join("/tmp", "tabshelf", "library.db");
+  }
+  return path.join(process.cwd(), "data", "library.db");
+}
 
 function ensureSchema(sqlite: InstanceType<typeof Database>) {
   sqlite.exec(`
@@ -30,7 +36,10 @@ function ensureSchema(sqlite: InstanceType<typeof Database>) {
       id TEXT PRIMARY KEY,
       album_id TEXT NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
       title TEXT NOT NULL,
-      track_number INTEGER NOT NULL
+      track_number INTEGER NOT NULL,
+      preview_url TEXT,
+      youtube_video_id TEXT,
+      apple_music_id TEXT
     );
 
     CREATE TABLE IF NOT EXISTS tabs (
@@ -45,12 +54,78 @@ function ensureSchema(sqlite: InstanceType<typeof Database>) {
   `);
 }
 
+function migrateSchema(sqlite: InstanceType<typeof Database>) {
+  const columns = sqlite.pragma("table_info(tracks)") as { name: string }[];
+  if (!columns.some((column) => column.name === "preview_url")) {
+    sqlite.exec("ALTER TABLE tracks ADD COLUMN preview_url TEXT");
+  }
+  if (!columns.some((column) => column.name === "youtube_video_id")) {
+    sqlite.exec("ALTER TABLE tracks ADD COLUMN youtube_video_id TEXT");
+  }
+  if (!columns.some((column) => column.name === "apple_music_id")) {
+    sqlite.exec("ALTER TABLE tracks ADD COLUMN apple_music_id TEXT");
+  }
+}
+
+function seedLibrary(sqlite: InstanceType<typeof Database>) {
+  const insertArtist = sqlite.prepare(
+    "INSERT OR IGNORE INTO artists (id, name, itunes_artist_id) VALUES (?, ?, ?)",
+  );
+  const insertAlbum = sqlite.prepare(
+    `INSERT OR IGNORE INTO albums
+      (id, artist_id, title, itunes_collection_id, artwork_url, release_year)
+      VALUES (?, ?, ?, ?, ?, ?)`,
+  );
+  const insertTrack = sqlite.prepare(
+    "INSERT OR IGNORE INTO tracks (id, album_id, title, track_number) VALUES (?, ?, ?, ?)",
+  );
+  const insertTab = sqlite.prepare(
+    `INSERT OR IGNORE INTO tabs
+      (id, user_id, track_id, songsterr_id, songsterr_url, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)`,
+  );
+
+  const apply = sqlite.transaction(() => {
+    for (const artist of seed.artists) {
+      insertArtist.run(artist.id, artist.name, artist.itunesArtistId);
+    }
+    for (const album of seed.albums) {
+      insertAlbum.run(
+        album.id,
+        album.artistId,
+        album.title,
+        album.itunesCollectionId,
+        album.artworkUrl,
+        album.releaseYear,
+      );
+    }
+    for (const track of seed.tracks) {
+      insertTrack.run(track.id, track.albumId, track.title, track.trackNumber);
+    }
+    for (const tab of seed.tabs) {
+      insertTab.run(
+        tab.id,
+        tab.userId,
+        tab.trackId,
+        tab.songsterrId,
+        tab.songsterrUrl,
+        tab.createdAt,
+      );
+    }
+  });
+
+  apply();
+}
+
 function createDb() {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  const sqlite = new Database(DB_PATH);
-  sqlite.pragma("journal_mode = WAL");
+  const dbPath = resolveDbPath();
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  const sqlite = new Database(dbPath);
+  sqlite.pragma(process.env.VERCEL ? "journal_mode = DELETE" : "journal_mode = WAL");
   sqlite.pragma("foreign_keys = ON");
   ensureSchema(sqlite);
+  migrateSchema(sqlite);
+  seedLibrary(sqlite);
   return drizzle(sqlite, { schema });
 }
 
