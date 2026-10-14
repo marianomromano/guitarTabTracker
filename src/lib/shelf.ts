@@ -44,6 +44,22 @@ export async function rememberShelfPart(
   await rememberShelfParts([{ collectionId, trackNumber, instrument }]);
 }
 
+export async function forgetShelfPart(
+  collectionId: number,
+  trackNumber: number,
+  instrument: Instrument,
+) {
+  const next = (await readShelfParts()).filter(
+    (part) =>
+      !(
+        part.collectionId === collectionId &&
+        part.trackNumber === trackNumber &&
+        part.instrument === instrument
+      ),
+  );
+  await writeShelf(next);
+}
+
 export async function rememberShelfParts(parts: ShelfPart[]) {
   const incoming = parts.filter(
     (part) => Number.isInteger(part.collectionId) && part.collectionId > 0,

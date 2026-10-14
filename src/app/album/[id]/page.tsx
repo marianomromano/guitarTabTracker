@@ -72,8 +72,8 @@ export default async function AlbumPage({
           missing={tracks.filter((track) => !track.parts.guitar).length}
         />
         <p className="mt-4 text-sm text-muted-foreground">
-          Tap a song title to open its tab. G, B, and D only save guitar, bass, or drums for that
-          song. Upload a Guitar Pro file to replace the blank staff.
+          Tap a song title to open its tab. Tap G, B, or D to add or remove guitar, bass, or drums
+          for that song. Upload a Guitar Pro file to replace the blank staff.
         </p>
       </div>
     </div>

@@ -25,7 +25,7 @@ import { ensureItunesAlbum, ensureUserTab } from "@/lib/hydrate";
 import { itunesAlbumId, partTabHref, parseItunesAlbumId, userTabId } from "@/lib/ids";
 import { parseInstrument, parseInstruments } from "@/lib/instrument";
 import { persistLibrary } from "@/lib/library-persist";
-import { rememberShelfPart, rememberShelfParts } from "@/lib/shelf";
+import { forgetShelfPart, rememberShelfPart, rememberShelfParts } from "@/lib/shelf";
 import { parseSoundsliceHash } from "@/lib/soundslice";
 import { revalidatePath } from "next/cache";
 
@@ -163,7 +163,7 @@ export async function addTab(input: {
 export async function addPartAction(input: {
   trackId: string;
   instrument: string;
-}): Promise<{ ok: true; tabHref: string } | { ok: false; error: string }> {
+}): Promise<{ ok: true; tabHref: string; tabId: string } | { ok: false; error: string }> {
   try {
     const userId = await ensureUserId();
     const instrument = parseInstrument(input.instrument);
@@ -208,9 +208,63 @@ export async function addPartAction(input: {
     revalidatePath("/library");
     revalidatePath(`/album/${track.albumId}`);
     revalidatePath(tabHref);
-    return { ok: true, tabHref };
+    return { ok: true, tabHref, tabId: savedTab.id };
   } catch (error) {
     return saveFailed(error, "Could not add that part.");
+  }
+}
+
+export async function removePartAction(input: {
+  trackId: string;
+  instrument: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const userId = await ensureUserId();
+    const instrument = parseInstrument(input.instrument);
+    const db = await getDb();
+    const track = db
+      .select({
+        id: tracks.id,
+        trackNumber: tracks.trackNumber,
+        albumId: albums.id,
+        itunesCollectionId: albums.itunesCollectionId,
+      })
+      .from(tracks)
+      .innerJoin(albums, eq(tracks.albumId, albums.id))
+      .where(eq(tracks.id, input.trackId))
+      .get();
+
+    if (!track) {
+      return { ok: false, error: "That song is not on this album." };
+    }
+
+    db.delete(tabs)
+      .where(
+        and(eq(tabs.userId, userId), eq(tabs.trackId, track.id), eq(tabs.instrument, instrument)),
+      )
+      .run();
+    await persistLibrary();
+
+    if (track.itunesCollectionId) {
+      await forgetShelfPart(Number(track.itunesCollectionId), track.trackNumber, instrument);
+    }
+
+    const tabHref = partTabHref(
+      track.itunesCollectionId,
+      track.trackNumber,
+      instrument,
+      userTabId(userId, track.id, instrument),
+    );
+    revalidatePath("/");
+    revalidatePath("/library");
+    revalidatePath(`/album/${track.albumId}`);
+    if (track.itunesCollectionId) {
+      revalidatePath(`/album/itunes-${track.itunesCollectionId}`);
+    }
+    revalidatePath(tabHref);
+    return { ok: true };
+  } catch (error) {
+    return saveFailed(error, "Could not remove that part.");
   }
 }
 

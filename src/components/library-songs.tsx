@@ -1,13 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { PartButtons } from "@/components/part-buttons";
 import { PlayButton } from "@/components/play-button";
 import { partTabHref } from "@/lib/ids";
+import { emptyParts } from "@/lib/instrument";
 import type { LibrarySong } from "@/lib/library";
 
 export function LibrarySongs({ songs }: { songs: LibrarySong[] }) {
-  const groups = groupByArtist(songs);
+  const [hidden, setHidden] = useState<Record<string, true>>({});
+  const groups = groupByArtist(songs.filter((song) => !hidden[song.tabId]));
+
+  if (groups.length === 0) {
+    return <p className="text-muted-foreground">No songs in this list.</p>;
+  }
 
   return (
     <div className="grid gap-8">
@@ -22,6 +30,7 @@ export function LibrarySongs({ songs }: { songs: LibrarySong[] }) {
                 song.instrument,
                 song.tabId,
               );
+              const parts = { ...emptyParts(), [song.instrument]: song.tabId };
               return (
                 <li
                   key={song.tabId}
@@ -57,6 +66,19 @@ export function LibrarySongs({ songs }: { songs: LibrarySong[] }) {
                     <span className="truncate text-base font-medium">{song.title}</span>
                     <span className="truncate text-sm text-muted-foreground">{song.albumTitle}</span>
                   </Link>
+                  <div className="flex items-center pr-3">
+                    <PartButtons
+                      trackId={song.trackId}
+                      parts={parts}
+                      active={song.instrument}
+                      returnTo={`/library?part=${song.instrument}`}
+                      onRemoved={(instrument) => {
+                        if (instrument === song.instrument) {
+                          setHidden((current) => ({ ...current, [song.tabId]: true }));
+                        }
+                      }}
+                    />
+                  </div>
                 </li>
               );
             })}

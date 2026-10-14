@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PartButtons } from "@/components/part-buttons";
 import { PlayButton } from "@/components/play-button";
-import { primaryPart, type InstrumentParts } from "@/lib/instrument";
+import { itunesTabPath } from "@/lib/ids";
+import { primaryPart, type Instrument, type InstrumentParts } from "@/lib/instrument";
 
 type TrackRow = {
   id: string;
@@ -27,16 +29,31 @@ export function TrackList({
   collectionId?: string | null;
   returnTo?: string;
 }) {
+  const [rows, setRows] = useState(tracks);
+
+  useEffect(() => {
+    setRows(tracks);
+  }, [tracks]);
+
+  function markPart(trackId: string, instrument: Instrument, tabId: string | null) {
+    setRows((current) =>
+      current.map((track) =>
+        track.id === trackId
+          ? { ...track, parts: { ...track.parts, [instrument]: tabId } }
+          : track,
+      ),
+    );
+  }
+
   return (
     <ol className="overflow-hidden rounded-xl ring-1 ring-white/10">
-      {tracks.map((track) => {
-        const lead = primaryPart(track.parts);
-        const tabHref =
-          lead && collectionId
-            ? `/tab/itunes-${collectionId}-${track.trackNumber}-${lead}`
-            : lead && track.parts[lead]
-              ? `/tab/${track.parts[lead]}`
-              : null;
+      {rows.map((track) => {
+        const instrument = primaryPart(track.parts) ?? "guitar";
+        const tabHref = collectionId
+          ? itunesTabPath(Number(collectionId), track.trackNumber, instrument)
+          : track.parts[instrument]
+            ? `/tab/${track.parts[instrument]}`
+            : `/tab/${track.id}-${instrument}`;
         return (
           <li
             key={track.id}
@@ -54,29 +71,22 @@ export function TrackList({
                 }}
               />
             </div>
-            {tabHref ? (
-              <Link
-                href={tabHref}
-                className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-3 py-3.5 text-sm text-zinc-100 transition active:bg-white/10 hover:bg-white/5"
-              >
-                <span className="w-8 shrink-0 font-mono text-xs text-muted-foreground">
-                  {String(track.trackNumber).padStart(2, "0")}
-                </span>
-                <span className="flex-1 truncate">{track.title}</span>
-              </Link>
-            ) : (
-              <div className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-3 py-3.5 text-sm opacity-60">
-                <span className="w-8 shrink-0 font-mono text-xs text-muted-foreground">
-                  {String(track.trackNumber).padStart(2, "0")}
-                </span>
-                <span className="flex-1 truncate">{track.title}</span>
-              </div>
-            )}
+            <Link
+              href={tabHref}
+              className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-3 py-3.5 text-sm text-zinc-100 transition active:bg-white/10 hover:bg-white/5"
+            >
+              <span className="w-8 shrink-0 font-mono text-xs text-muted-foreground">
+                {String(track.trackNumber).padStart(2, "0")}
+              </span>
+              <span className="flex-1 truncate">{track.title}</span>
+            </Link>
             <div className="flex items-center pr-3">
               <PartButtons
                 trackId={track.id}
                 parts={track.parts}
                 returnTo={returnTo}
+                onSaved={(instrument, tabId) => markPart(track.id, instrument, tabId)}
+                onRemoved={(instrument) => markPart(track.id, instrument, null)}
               />
             </div>
           </li>
