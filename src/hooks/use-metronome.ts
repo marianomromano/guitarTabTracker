@@ -12,6 +12,7 @@ type MetronomeOptions = {
   playing: boolean;
   previewUrl: string | null;
   trackId: string | null;
+  volume: number;
   getPlaybackTime: () => number;
 };
 
@@ -20,6 +21,7 @@ export function useMetronome({
   playing,
   previewUrl,
   trackId,
+  volume,
   getPlaybackTime,
 }: MetronomeOptions) {
   const [bpm, setBpm] = useState<number | null>(null);
@@ -31,8 +33,10 @@ export function useMetronome({
   const audioRef = useRef<AudioContext | null>(null);
   const pulseTimerRef = useRef(0);
   const manualRef = useRef(false);
+  const volumeRef = useRef(volume);
 
   bpmRef.current = bpm;
+  volumeRef.current = volume;
 
   const audioContext = useCallback(() => {
     if (audioRef.current && audioRef.current.state !== "closed") {
@@ -85,29 +89,29 @@ export function useMetronome({
   }, [enabled, previewUrl, trackId]);
 
   useEffect(() => {
+    lastBeatRef.current = -1;
     if (!enabled || !playing || !bpm) {
-      lastBeatRef.current = -1;
       return;
     }
     const context = audioContext();
     if (!context) return;
     void context.resume();
 
-    const interval = 60 / bpm;
+    const secondsPerBeat = 60 / bpm;
     const timer = window.setInterval(() => {
       const songTime = getPlaybackTime();
       const now = context.currentTime;
       let beatTime =
         offsetRef.current +
-        Math.ceil((songTime - offsetRef.current) / interval - 1e-4) * interval;
-      if (beatTime < songTime) beatTime += interval;
+        Math.ceil((songTime - offsetRef.current) / secondsPerBeat - 1e-4) * secondsPerBeat;
+      if (beatTime < songTime) beatTime += secondsPerBeat;
 
       const horizon = songTime + SCHEDULE_AHEAD;
       while (beatTime < horizon) {
-        const beat = Math.round((beatTime - offsetRef.current) / interval);
+        const beat = Math.round((beatTime - offsetRef.current) / secondsPerBeat);
         if (beat > lastBeatRef.current) {
           const when = now + Math.max(0, beatTime - songTime);
-          scheduleClick(context, when, beat % 4 === 0);
+          scheduleClick(context, when, beat % 4 === 0, volumeRef.current);
           lastBeatRef.current = beat;
           if (beatTime - songTime < 0.05) {
             setPulse(true);
@@ -115,7 +119,7 @@ export function useMetronome({
             pulseTimerRef.current = window.setTimeout(() => setPulse(false), 80);
           }
         }
-        beatTime += interval;
+        beatTime += secondsPerBeat;
       }
     }, LOOKAHEAD_MS);
 
@@ -134,18 +138,26 @@ export function useMetronome({
   const nudge = useCallback((delta: number) => {
     manualRef.current = true;
     setDetecting(false);
+    lastBeatRef.current = -1;
     setBpm((current) => clampBpm((current ?? DEFAULT_BPM) + delta));
   }, []);
 
   return { bpm, detecting, pulse, nudge };
 }
 
-function scheduleClick(context: AudioContext, when: number, downbeat: boolean) {
+function scheduleClick(
+  context: AudioContext,
+  when: number,
+  downbeat: boolean,
+  volume: number,
+) {
+  const level = Math.max(0, Math.min(1, volume));
+  if (level <= 0) return;
   const oscillator = context.createOscillator();
   const gain = context.createGain();
   oscillator.type = "square";
   oscillator.frequency.value = downbeat ? 1320 : 880;
-  gain.gain.setValueAtTime(downbeat ? 0.22 : 0.12, when);
+  gain.gain.setValueAtTime((downbeat ? 0.28 : 0.16) * level, when);
   gain.gain.exponentialRampToValueAtTime(0.001, when + 0.04);
   oscillator.connect(gain);
   gain.connect(context.destination);

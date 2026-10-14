@@ -28,7 +28,7 @@ export function PlayButton({
       toggle();
       return;
     }
-    if (track.appleMusicId || track.previewUrl) {
+    if (track.previewUrl) {
       void play({
         ...track,
         previewUrl: track.previewUrl,
@@ -44,8 +44,8 @@ export function PlayButton({
       }
       await play({
         ...track,
-        previewUrl: media.previewUrl,
-        appleMusicId: media.appleMusicId,
+        previewUrl: media.previewUrl ?? track.previewUrl,
+        appleMusicId: media.appleMusicId ?? track.appleMusicId ?? null,
       });
     });
   }

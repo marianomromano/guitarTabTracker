@@ -38,7 +38,7 @@ export function NowPlaying() {
   return (
     <div
       data-now-playing
-      className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t border-white/10 bg-[#171410]/95 px-4 py-3 backdrop-blur-md md:bottom-0"
+      className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-white/10 bg-[#171410]/95 px-4 py-3 backdrop-blur-md md:bottom-0"
     >
       <div className="mx-auto flex w-full max-w-3xl items-center gap-3">
         {track.artworkUrl ? (

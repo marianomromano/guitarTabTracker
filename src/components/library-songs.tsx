@@ -54,8 +54,8 @@ export function LibrarySongs({ songs }: { songs: LibrarySong[] }) {
                     href={href}
                     className="flex min-h-16 min-w-0 flex-1 flex-col justify-center px-3 py-3 text-zinc-100 transition active:bg-white/10 hover:bg-white/5"
                   >
-                    <span className="truncate text-sm font-medium">{song.title}</span>
-                    <span className="truncate text-xs text-muted-foreground">{song.albumTitle}</span>
+                    <span className="truncate text-base font-medium">{song.title}</span>
+                    <span className="truncate text-sm text-muted-foreground">{song.albumTitle}</span>
                   </Link>
                 </li>
               );

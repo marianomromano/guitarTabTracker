@@ -1,12 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Nav } from "@/components/nav";
 import { NowPlaying } from "@/components/now-playing";
 import { PlayerProvider } from "@/components/player-provider";
 import { getSession } from "@/lib/auth";
-import { clerkAppearance } from "@/lib/clerk-appearance";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,7 +31,8 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await getSession();
-  const tree = (
+
+  return (
     <html
       lang="en"
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
@@ -45,11 +44,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           data-web-components=""
         />
         <PlayerProvider>
-          <Nav
-            clerkEnabled={session.clerkEnabled}
-            isSignedIn={session.isSignedIn}
-            isDemo={session.isDemo}
-          />
+          <Nav isSignedIn={session.isSignedIn} isDemo={session.isDemo} />
           <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
             {children}
           </main>
@@ -58,20 +53,4 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </body>
     </html>
   );
-
-  if (session.clerkEnabled) {
-    return (
-      <ClerkProvider
-        appearance={clerkAppearance}
-        signInUrl="/sign-in"
-        signUpUrl="/sign-up"
-        signInFallbackRedirectUrl="/library"
-        signUpFallbackRedirectUrl="/library"
-      >
-        {tree}
-      </ClerkProvider>
-    );
-  }
-
-  return tree;
 }

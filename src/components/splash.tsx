@@ -28,13 +28,7 @@ const STEPS = [
   },
 ];
 
-export function Splash({
-  clerkEnabled,
-  isDemo,
-}: {
-  clerkEnabled: boolean;
-  isDemo: boolean;
-}) {
+export function Splash({ isDemo }: { isDemo: boolean }) {
   return (
     <div className="relative">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_at_top,rgba(201,162,74,0.16),transparent_58%)]" />
@@ -64,25 +58,19 @@ export function Splash({
             variant="outline"
             className="w-full border-white/15 px-5 sm:w-auto"
           >
-            <Link href="/sign-in">
-              {clerkEnabled ? "Sign in to save your shelf" : "Save your shelf"}
-            </Link>
+            <Link href="/sign-in">Sign in to save your shelf</Link>
           </Button>
         </div>
         <p className="mt-3 text-sm text-muted-foreground">
           {isDemo
             ? "You already have a demo shelf in this browser. Sign in to keep it."
             : "The demo lets you search, add albums, and open tabs with no account."}
-          {clerkEnabled ? (
-            <>
-              {" "}
-              No account yet?{" "}
-              <Link href="/sign-up" className="text-gold underline-offset-4 hover:underline">
-                Create one
-              </Link>
-              .
-            </>
-          ) : null}
+          {" "}
+          No account yet?{" "}
+          <Link href="/sign-up" className="text-gold underline-offset-4 hover:underline">
+            Create one
+          </Link>
+          .
           {" "}
           Need to get in pitch first?{" "}
           <Link href="/tuner" className="text-gold underline-offset-4 hover:underline">

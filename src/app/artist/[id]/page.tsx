@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { AlbumCover } from "@/components/album-cover";
+import { BackLink } from "@/components/back-link";
 import { requireUserId } from "@/lib/auth";
 import { getArtistLibrary } from "@/lib/library";
 
@@ -22,13 +21,7 @@ export default async function ArtistPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
-      <Link
-        href="/library"
-        className="mb-6 inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Library
-      </Link>
+      <BackLink href="/library">Library</BackLink>
       <p className="text-[11px] tracking-[0.28em] text-gold uppercase">Artist</p>
       <h1 className="font-heading mt-1 mb-8 text-3xl">{artist.name}</h1>
       <div className="shelf">

@@ -2,7 +2,6 @@ import { and, eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { getDb } from "@/db";
 import { tabs } from "@/db/schema";
-import { isClerkConfigured } from "@/lib/auth-config";
 
 export const DEMO_COOKIE = "tabshelf-demo-id";
 const LOCAL_DEMO_VALUE = "local";
@@ -28,7 +27,7 @@ export async function ensureDemoCookie() {
     return demoUserIdFromCookie(current)!;
   }
 
-  const value = isClerkConfigured() ? crypto.randomUUID() : LOCAL_DEMO_VALUE;
+  const value = crypto.randomUUID();
   jar.set(DEMO_COOKIE, value, {
     httpOnly: true,
     sameSite: "lax",

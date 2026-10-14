@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { usePlayer } from "@/components/player-provider";
 
 export function AppleMusicConnect() {
-  const { musicConfigured, musicAuthorized, authorizeAppleMusic } = usePlayer();
+  const { musicConfigured, musicAuthorized, authorizeAppleMusic, disconnectAppleMusic } = usePlayer();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -18,7 +18,21 @@ export function AppleMusicConnect() {
   }
 
   if (musicAuthorized) {
-    return <p className="text-sm text-muted-foreground">Apple Music is connected. Play starts the full song.</p>;
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="text-sm text-muted-foreground">
+          Apple Music is connected on this device. Play starts the full song.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="border-white/15"
+          onClick={() => void disconnectAppleMusic()}
+        >
+          Disconnect
+        </Button>
+      </div>
+    );
   }
 
   return (

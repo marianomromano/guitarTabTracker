@@ -3,15 +3,8 @@
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { albums, artists, tabs, tracks } from "@/db/schema";
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { requireUserId } from "@/lib/auth";
-import { isClerkConfigured } from "@/lib/auth-config";
-import {
-  createClerkSignInTicket,
-  findClerkUserIdByEmail,
-  verifyClerkPassword,
-} from "@/lib/clerk-admin";
+import { ensureUserId, getSession, requireUserId } from "@/lib/auth";
 import {
   claimDemoTabs,
   clearDemoCookie,
@@ -45,47 +38,20 @@ function saveFailed(error: unknown, fallback: string): { ok: false; error: strin
   return { ok: false, error: fallback };
 }
 
+
 export async function startDemoAction() {
   await ensureDemoCookie();
   redirect("/library");
 }
 
-export async function passwordSignInAction(input: {
-  email: string;
-  password: string;
-}): Promise<{ ok: true; ticket: string } | { ok: false; error: string }> {
-  if (!isClerkConfigured()) {
-    return { ok: false, error: "Sign-in is not connected yet." };
-  }
-
-  const email = input.email.trim().toLowerCase();
-  const password = input.password;
-  if (!email || !password) {
-    return { ok: false, error: "Enter your email and password." };
-  }
-
-  try {
-    const userId = await findClerkUserIdByEmail(email);
-    if (!userId || !(await verifyClerkPassword(userId, password))) {
-      return { ok: false, error: "Incorrect email or password." };
-    }
-
-    const ticket = await createClerkSignInTicket(userId);
-    return { ok: true, ticket };
-  } catch (error) {
-    return saveFailed(error, "Could not sign in right now. Try again.");
-  }
-}
-
 export async function claimDemoLibraryAction() {
-  if (!isClerkConfigured()) return;
-  const { userId } = await auth();
-  if (!userId) return;
+  const session = await getSession();
+  if (!session.isSignedIn || !session.userId) return;
 
   const demoUserId = await readDemoUserId();
   if (!demoUserId) return;
 
-  claimDemoTabs(userId, demoUserId);
+  claimDemoTabs(session.userId, demoUserId);
   await clearDemoCookie();
   revalidatePath("/library");
   revalidatePath("/");
@@ -104,13 +70,13 @@ export async function addTabAction(input: {
   }
 }
 
-async function addTab(input: {
+export async function addTab(input: {
   title: string;
   artist: string;
   collectionId?: number;
   instruments?: string[];
 }): Promise<AddTabResult> {
-  const userId = await requireUserId();
+  const userId = await ensureUserId();
   const artistName = input.artist.trim();
   const title = input.title.trim();
   const instruments = parseInstruments(input.instruments);
@@ -198,7 +164,7 @@ export async function addPartAction(input: {
   instrument: string;
 }): Promise<{ ok: true; tabHref: string } | { ok: false; error: string }> {
   try {
-    const userId = await requireUserId();
+    const userId = await ensureUserId();
     const instrument = parseInstrument(input.instrument);
     const db = getDb();
     const track = db
@@ -503,7 +469,6 @@ export async function resolveTrackPreviewAction(trackId: string) {
 }
 
 export async function resolveTrackMediaAction(trackId: string) {
-  await requireUserId();
   const db = getDb();
   const row = db
     .select({

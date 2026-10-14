@@ -20,20 +20,22 @@ export function SearchResults({
     return <p className="text-muted-foreground">No songs found for “{query}”.</p>;
   }
 
+  const returnTo = `/search?q=${encodeURIComponent(query)}`;
+
   return (
     <ul className="divide-y divide-white/5 overflow-hidden rounded-xl ring-1 ring-white/10">
       {results.map((song) => (
         <li
           key={song.trackId}
-          className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="min-w-0">
-            <p className="font-medium">{song.trackName}</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-lg font-medium">{song.trackName}</p>
+            <p className="text-base text-muted-foreground">
               {song.artistName} · {song.collectionName}
             </p>
           </div>
-          <AddTabButton song={song} />
+          <AddTabButton song={song} returnTo={returnTo} />
         </li>
       ))}
     </ul>

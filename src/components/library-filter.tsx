@@ -19,7 +19,7 @@ export function LibraryFilter({ current }: { current?: Instrument }) {
           key={item.href}
           href={item.href}
           className={cn(
-            "rounded-full px-3 py-1.5 text-sm",
+            "inline-flex min-h-12 items-center rounded-full px-4 text-base",
             item.active
               ? "bg-gold text-black"
               : "text-muted-foreground ring-1 ring-white/15 hover:text-foreground",

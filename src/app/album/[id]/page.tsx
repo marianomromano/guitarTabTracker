@@ -1,10 +1,9 @@
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { syncAlbumPreviewsAction } from "@/app/actions";
 import { AppleMusicConnect } from "@/components/apple-music-connect";
 import { AutoFillTabs } from "@/components/auto-fill-tabs";
+import { BackLink } from "@/components/back-link";
 import { TrackList } from "@/components/track-list";
 import { requireUserId } from "@/lib/auth";
 import { hasAnyPart } from "@/lib/instrument";
@@ -37,13 +36,7 @@ export default async function AlbumPage({
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-10 px-4 py-10 lg:grid-cols-[280px_1fr]">
       <div>
-        <Link
-          href={backHref}
-          className="mb-6 inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          {backLabel}
-        </Link>
+        <BackLink href={backHref}>{backLabel}</BackLink>
         <div className="relative aspect-square overflow-hidden rounded-md shadow-2xl ring-1 ring-black/40">
           {album.artworkUrl ? (
             <Image

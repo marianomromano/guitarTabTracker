@@ -18,11 +18,12 @@ export default async function LibraryPage({
   searchParams: Promise<{ part?: string }>;
 }) {
   const session = await getSession();
+  const params = await searchParams;
   if (!session.userId) {
-    redirect("/");
+    redirect("/sign-in");
   }
 
-  const { part } = await searchParams;
+  const { part } = params;
   const instrument = isInstrument(part) ? part : undefined;
   const artists = instrument ? [] : await getLibrary(session.userId);
   const songs = instrument ? await getLibrarySongs(session.userId, instrument) : [];
@@ -31,7 +32,7 @@ export default async function LibraryPage({
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
       {session.isSignedIn ? <ClaimDemoOnMount /> : null}
-      {session.isDemo ? <DemoBanner clerkEnabled={session.clerkEnabled} /> : null}
+      {session.isDemo ? <DemoBanner /> : null}
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
           <p className="text-[11px] tracking-[0.28em] text-gold uppercase">

@@ -10,5 +10,5 @@ export default async function HomePage() {
     redirect("/library");
   }
 
-  return <Splash clerkEnabled={session.clerkEnabled} isDemo={session.isDemo} />;
+  return <Splash isDemo={session.isDemo} />;
 }

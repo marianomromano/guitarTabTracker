@@ -1,6 +1,6 @@
 import { SearchForm } from "@/components/search-form";
 import { SearchResults } from "@/components/search-results";
-import { requireUserId } from "@/lib/auth";
+import { addErrorMessage } from "@/lib/add-errors";
 import { searchItunesSongs } from "@/lib/itunes";
 
 export const dynamic = "force-dynamic";
@@ -8,10 +8,9 @@ export const dynamic = "force-dynamic";
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; addError?: string }>;
 }) {
-  await requireUserId();
-  const { q } = await searchParams;
+  const { q, addError } = await searchParams;
   const query = q?.trim() ?? "";
   let results: Awaited<ReturnType<typeof searchItunesSongs>> = [];
   let searchError: string | null = null;
@@ -32,6 +31,9 @@ export default async function SearchPage({
         staff you can play and replace.
       </p>
       <SearchForm key={query} initialQuery={query} />
+      {addErrorMessage(addError) ? (
+        <p className="mb-4 text-base text-destructive">{addErrorMessage(addError)}</p>
+      ) : null}
       {searchError ? (
         <p className="text-destructive">{searchError}</p>
       ) : (

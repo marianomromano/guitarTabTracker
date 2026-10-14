@@ -15,6 +15,14 @@ function resolveDbPath() {
 
 function ensureSchema(sqlite: InstanceType<typeof Database>) {
   sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users(email);
+
     CREATE TABLE IF NOT EXISTS artists (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -91,6 +99,14 @@ function migrateSchema(sqlite: InstanceType<typeof Database>) {
   sqlite.exec(
     "CREATE UNIQUE INDEX IF NOT EXISTS tabs_user_track_instrument_idx ON tabs(user_id, track_id, instrument)",
   );
+
+  // The Clerk-era shelf belonged to marianomromano@icloud.com.
+  sqlite
+    .prepare(
+      `UPDATE tabs SET user_id = 'acct:marianomromano@icloud.com'
+       WHERE user_id IN ('user_3J8vUbeTly42OCV8LHmiMiJSKEU', 'acct:marianomromano@icloud')`,
+    )
+    .run();
 }
 
 function seedLibrary(sqlite: InstanceType<typeof Database>) {

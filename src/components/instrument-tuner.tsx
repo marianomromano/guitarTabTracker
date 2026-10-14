@@ -153,7 +153,7 @@ export function InstrumentTuner() {
             type="button"
             variant="outline"
             size="lg"
-            className="h-12 w-full border-white/15"
+            className="w-full border-white/15"
             onClick={stop}
           >
             <MicOff />
@@ -163,7 +163,7 @@ export function InstrumentTuner() {
           <Button
             type="button"
             size="lg"
-            className="h-12 w-full bg-gold text-black hover:bg-gold/90"
+            className="w-full bg-gold text-black hover:bg-gold/90"
             onClick={start}
           >
             <Mic />

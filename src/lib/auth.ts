@@ -1,48 +1,41 @@
 import { cache } from "react";
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { isClerkConfigured } from "@/lib/auth-config";
-import { readDemoUserId } from "@/lib/demo";
-
-export { isClerkConfigured } from "@/lib/auth-config";
+import { ensureDemoCookie, readDemoUserId } from "@/lib/demo";
+import { readSessionCookie } from "@/lib/session";
 
 export type Session = {
   userId: string | null;
+  email: string | null;
   isSignedIn: boolean;
   isDemo: boolean;
-  clerkEnabled: boolean;
 };
 
 export const getSession = cache(async (): Promise<Session> => {
-  const clerkEnabled = isClerkConfigured();
-
-  if (clerkEnabled) {
-    const { userId } = await auth();
-    if (userId) {
-      return {
-        userId,
-        isSignedIn: true,
-        isDemo: false,
-        clerkEnabled,
-      };
-    }
+  const signedIn = await readSessionCookie();
+  if (signedIn) {
+    return {
+      userId: signedIn.userId,
+      email: signedIn.email,
+      isSignedIn: true,
+      isDemo: false,
+    };
   }
 
   const demoUserId = await readDemoUserId();
   if (demoUserId) {
     return {
       userId: demoUserId,
+      email: null,
       isSignedIn: false,
       isDemo: true,
-      clerkEnabled,
     };
   }
 
   return {
     userId: null,
+    email: null,
     isSignedIn: false,
     isDemo: false,
-    clerkEnabled,
   };
 });
 
@@ -52,4 +45,10 @@ export async function requireUserId() {
     redirect("/");
   }
   return session.userId;
+}
+
+export async function ensureUserId() {
+  const session = await getSession();
+  if (session.userId) return session.userId;
+  return ensureDemoCookie();
 }

@@ -10,7 +10,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { authorizeErrorMessage, configureMusicKit, getMusicKit, searchCatalogSong } from "@/lib/musickit";
+import {
+  authorizeErrorMessage,
+  configureMusicKit,
+  getMusicKit,
+  persistMusicAuthorization,
+  rememberMusicUserToken,
+  searchCatalogSong,
+} from "@/lib/musickit";
 
 export type PlayableTrack = {
   id: string;
@@ -37,6 +44,7 @@ type PlayerContextValue = {
   stop: () => void;
   getPlaybackTime: () => number;
   authorizeAppleMusic: () => Promise<boolean>;
+  disconnectAppleMusic: () => Promise<void>;
 };
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -61,6 +69,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const playingStates = new Set([PlaybackStates.playing, PlaybackStates.seeking, PlaybackStates.waiting]);
 
     music.addEventListener(Events.authorizationStatusDidChange, () => {
+      if (music.isAuthorized) persistMusicAuthorization();
+      else rememberMusicUserToken(null);
       setMusicAuthorized(Boolean(music.isAuthorized));
     });
     music.addEventListener(Events.playbackStateDidChange, () => {
@@ -103,12 +113,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const playPreview = useCallback((next: PlayableTrack) => {
     const audio = audioRef.current;
-    if (!audio || !next.previewUrl) return;
+    if (!audio || !next.previewUrl) return false;
     getMusicKit()?.pause();
     setSource("preview");
     setProgress(0);
-    audio.src = next.previewUrl;
-    void audio.play();
+    const preview = next.previewUrl.startsWith("/api/preview")
+      ? next.previewUrl
+      : `/api/preview?url=${encodeURIComponent(next.previewUrl)}`;
+    audio.src = preview;
+    void audio.play().catch((error) => {
+      console.error(error);
+    });
+    return true;
   }, []);
 
   const authorizeAppleMusic = useCallback(async () => {
@@ -123,30 +139,41 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     bindMusicEvents(music);
     if (!music.isAuthorized) {
       try {
-        await music.authorize();
+        const token = await music.authorize();
+        rememberMusicUserToken(token || music.musicUserToken);
       } catch (error) {
         throw new Error(authorizeErrorMessage(error));
       }
     }
+    persistMusicAuthorization();
     setMusicAuthorized(Boolean(music.isAuthorized));
     return Boolean(music.isAuthorized);
   }, [bindMusicEvents]);
+
+  const disconnectAppleMusic = useCallback(async () => {
+    const music = getMusicKit();
+    rememberMusicUserToken(null);
+    if (music?.isAuthorized) {
+      await music.unauthorize();
+    }
+    setMusicAuthorized(false);
+  }, []);
 
   const play = useCallback(
     async (next: PlayableTrack) => {
       setTrack(next);
       setProgress(0);
-      // Start the preview in the same click so autoplay is not blocked
-      // after the MusicKit token fetch. Upgrade to the full song if authorized.
-      playPreview(next);
+      // Start the preview in the same tap so iPad autoplay is not blocked.
+      // Full Apple Music songs only play when already connected — Play must
+      // not open Apple's login popup.
+      const startedPreview = playPreview(next);
 
       try {
         const ready = await configureMusicKit();
         setMusicConfigured(ready);
-        if (!ready) return;
-        const authorized = await authorizeAppleMusic();
         const music = getMusicKit();
-        if (!authorized || !music) return;
+        if (!ready || !music?.isAuthorized) return;
+        bindMusicEvents(music);
 
         let songId = next.appleMusicId;
         if (!songId) {
@@ -161,9 +188,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         setPlaying(true);
       } catch (error) {
         console.error(error);
+        if (!startedPreview) playPreview(next);
       }
     },
-    [authorizeAppleMusic, playPreview],
+    [bindMusicEvents, playPreview],
   );
 
   const toggle = useCallback(() => {
@@ -232,9 +260,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       stop,
       getPlaybackTime,
       authorizeAppleMusic,
+      disconnectAppleMusic,
     }),
     [
       authorizeAppleMusic,
+      disconnectAppleMusic,
       duration,
       getPlaybackTime,
       musicAuthorized,
@@ -256,6 +286,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       <audio
         ref={audioRef}
         preload="none"
+        playsInline
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => {

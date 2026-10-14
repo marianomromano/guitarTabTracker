@@ -11,6 +11,7 @@ type MusicKitApi = {
     developerToken: string;
     app: { name: string; build: string };
     storefrontId?: string;
+    musicUserToken?: string;
   }) => Promise<MusicKitInstance>;
   getInstance: () => MusicKitInstance;
   Events: {
@@ -36,6 +37,7 @@ type MusicKitApi = {
 
 type MusicKitInstance = {
   isAuthorized: boolean;
+  musicUserToken?: string;
   storefrontId?: string;
   currentPlaybackTime: number;
   currentPlaybackDuration: number;

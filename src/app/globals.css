@@ -135,7 +135,7 @@
 }
 
 body:has([data-app-nav]) main {
-  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
 }
 
 body:has([data-now-playing]) main {
