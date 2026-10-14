@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { syncAlbumPreviewsAction } from "@/app/actions";
-import { AppleMusicConnect } from "@/components/apple-music-connect";
 import { AutoFillTabs } from "@/components/auto-fill-tabs";
 import { BackLink } from "@/components/back-link";
 import { TrackList } from "@/components/track-list";
@@ -66,18 +65,16 @@ export default async function AlbumPage({
           artistName={album.artistName}
           artworkUrl={album.artworkUrl}
           collectionId={album.itunesCollectionId}
+          returnTo={`/album/${id}`}
         />
         <AutoFillTabs
           albumId={album.id}
           missing={tracks.filter((track) => !track.parts.guitar).length}
         />
-        <div className="mt-4 space-y-2">
-          <AppleMusicConnect />
-          <p className="text-sm text-muted-foreground">
-            Gold G, B, and D open guitar, bass, and drum tabs in the app. Outline letters add that
-            part for this song. Upload a Guitar Pro file to replace the blank staff.
-          </p>
-        </div>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Tap a song title to open its tab. G, B, and D only save guitar, bass, or drums for that
+          song. Upload a Guitar Pro file to replace the blank staff.
+        </p>
       </div>
     </div>
   );

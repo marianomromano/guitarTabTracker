@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Guitar, Library, Search } from "lucide-react";
+import { Guitar, Library, Search, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +81,18 @@ export function Nav({
             >
               Tuner
             </Link>
+            {inApp ? (
+              <Link
+                href="/settings"
+                className={
+                  pathname.startsWith("/settings")
+                    ? "inline-flex min-h-12 items-center px-3 text-foreground"
+                    : "inline-flex min-h-12 items-center px-3 hover:text-foreground"
+                }
+              >
+                Settings
+              </Link>
+            ) : null}
           </nav>
           {inApp ? (
             <form
@@ -134,7 +146,7 @@ export function Nav({
           data-app-nav
           className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#12100c]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
         >
-          <div className="grid grid-cols-3">
+          <div className="grid grid-cols-4">
             <MobileNavLink
               href="/library"
               label="Library"
@@ -152,6 +164,12 @@ export function Nav({
               label="Tuner"
               icon={Guitar}
               active={pathname.startsWith("/tuner")}
+            />
+            <MobileNavLink
+              href="/settings"
+              label="Settings"
+              icon={Settings}
+              active={pathname.startsWith("/settings")}
             />
           </div>
         </nav>

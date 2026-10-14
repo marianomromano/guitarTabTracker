@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { AppleMusicConnect } from "@/components/apple-music-connect";
 import { BackLink } from "@/components/back-link";
 import { ChangeTabButton } from "@/components/change-tab-button";
 import { PartButtons } from "@/components/part-buttons";
@@ -61,9 +60,8 @@ export default async function TabPage({
           <PartButtons
             trackId={tab.trackId}
             parts={tab.parts}
-            collectionId={tab.itunesCollectionId}
-            trackNumber={tab.trackNumber}
             active={tab.instrument}
+            returnTo={`/tab/${id}`}
           />
           <PlayButton
             size="lg"
@@ -83,9 +81,6 @@ export default async function TabPage({
             instrument={tab.instrument}
           />
         </div>
-      </div>
-      <div className="mb-4">
-        <AppleMusicConnect />
       </div>
       <TabStage
         trackId={tab.trackId}

@@ -19,11 +19,13 @@ export function TrackList({
   artistName,
   artworkUrl,
   collectionId,
+  returnTo = "/library",
 }: {
   tracks: TrackRow[];
   artistName: string;
   artworkUrl: string | null;
   collectionId?: string | null;
+  returnTo?: string;
 }) {
   return (
     <ol className="overflow-hidden rounded-xl ring-1 ring-white/10">
@@ -74,8 +76,7 @@ export function TrackList({
               <PartButtons
                 trackId={track.id}
                 parts={track.parts}
-                collectionId={collectionId}
-                trackNumber={track.trackNumber}
+                returnTo={returnTo}
               />
             </div>
           </li>

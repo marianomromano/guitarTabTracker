@@ -23,7 +23,6 @@ export function NowPlaying() {
     musicAuthorized,
     toggle,
     seek,
-    authorizeAppleMusic,
   } = usePlayer();
 
   const label = !track
@@ -31,7 +30,7 @@ export function NowPlaying() {
     : source === "apple"
       ? "Apple Music"
       : musicConfigured && !musicAuthorized
-        ? "Preview · connect Apple Music for the full song"
+        ? "Preview · connect Apple Music in Settings"
         : "Apple preview";
 
   return (
@@ -70,17 +69,6 @@ export function NowPlaying() {
           {track ? <MetronomeControls /> : null}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          {track && musicConfigured && !musicAuthorized ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="border-white/15"
-              onClick={() => void authorizeAppleMusic()}
-            >
-              Connect Apple Music
-            </Button>
-          ) : null}
           <Button
             type="button"
             size="lg"

@@ -38,7 +38,6 @@ export default async function LibraryPage({
           <p className="text-[11px] tracking-[0.28em] text-gold uppercase">
             {session.isDemo ? "Demo shelf" : "Library"}
           </p>
-          <h1 className="font-heading mt-1 text-3xl">Your shelf</h1>
           <LibraryFilter current={instrument} />
         </div>
         <Button asChild className="bg-gold text-black hover:bg-gold/90">

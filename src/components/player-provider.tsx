@@ -186,34 +186,41 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     async (next: PlayableTrack) => {
       setTrack(next);
       setProgress(0);
-      // Start the preview in the same tap so iPad autoplay is not blocked.
-      // Full Apple Music songs only play when already connected — Play must
-      // not open Apple's login popup, and must not stop the preview until
-      // the full song is actually playing.
-      playPreview(next);
 
-      if (isLegacyIos()) return;
+      if (isLegacyIos()) {
+        playPreview(next);
+        return;
+      }
 
       const music = getMusicKit();
-      if (!music?.isAuthorized) return;
+      if (music?.isAuthorized) {
+        try {
+          bindMusicEvents(music);
+          audioRef.current?.pause();
 
-      try {
-        bindMusicEvents(music);
+          let songId = next.appleMusicId;
+          if (!songId) {
+            songId = await searchCatalogSong(next.artist, next.title);
+          }
+          if (!songId) {
+            playPreview(next);
+            return;
+          }
 
-        let songId = next.appleMusicId;
-        if (!songId) {
-          songId = await searchCatalogSong(next.artist, next.title);
+          await music.setQueue({ song: songId });
+          await music.play();
+          audioRef.current?.pause();
+          setSource("apple");
+          setPlaying(true);
+          return;
+        } catch (error) {
+          console.error(error);
+          playPreview(next);
+          return;
         }
-        if (!songId) return;
-
-        await music.setQueue({ song: songId });
-        await music.play();
-        audioRef.current?.pause();
-        setSource("apple");
-        setPlaying(true);
-      } catch (error) {
-        console.error(error);
       }
+
+      playPreview(next);
     },
     [bindMusicEvents, playPreview],
   );
