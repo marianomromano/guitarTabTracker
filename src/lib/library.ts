@@ -10,6 +10,7 @@ import {
   type Instrument,
   type InstrumentParts,
 } from "@/lib/instrument";
+import { lookupItunesAlbum, searchItunesSong, titlesMatch } from "@/lib/itunes";
 import { readShelfParts } from "@/lib/shelf";
 
 export type LibraryAlbum = {
@@ -76,6 +77,72 @@ export type TabView = {
   parts: TrackParts;
 };
 
+async function fillAlbumPreviewUrls<T extends { id: string; title: string; previewUrl: string | null; appleMusicId: string | null }>(
+  album: { id: string; itunesCollectionId: string | null },
+  albumTracks: T[],
+): Promise<T[]> {
+  if (albumTracks.every((track) => track.previewUrl)) return albumTracks;
+  if (!album.itunesCollectionId) return albumTracks;
+
+  try {
+    const lookup = await lookupItunesAlbum(Number(album.itunesCollectionId));
+    const db = await getDb();
+    return albumTracks.map((track) => {
+      if (track.previewUrl && track.appleMusicId) return track;
+      const match = lookup.tracks.find((item) => titlesMatch(item.trackName, track.title));
+      if (!match?.previewUrl && !match?.appleMusicId) return track;
+      const previewUrl = track.previewUrl ?? match.previewUrl;
+      const appleMusicId = track.appleMusicId ?? match.appleMusicId;
+      db.update(tracks)
+        .set({ previewUrl, appleMusicId })
+        .where(eq(tracks.id, track.id))
+        .run();
+      return { ...track, previewUrl, appleMusicId };
+    });
+  } catch (error) {
+    console.error(error);
+    return albumTracks;
+  }
+}
+
+async function fillSongPreviewUrls(songs: LibrarySong[]): Promise<LibrarySong[]> {
+  const missing = songs.filter((song) => !song.previewUrl);
+  if (missing.length === 0) return songs;
+
+  const found = new Map<string, { previewUrl: string | null; appleMusicId: string | null }>();
+  await Promise.all(
+    missing.map(async (song) => {
+      try {
+        const media = await searchItunesSong(song.artistName, song.title, song.albumTitle);
+        if (media.previewUrl || media.appleMusicId) {
+          found.set(song.trackId, media);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }),
+  );
+  if (found.size === 0) return songs;
+
+  const db = await getDb();
+  return songs.map((song) => {
+    const media = found.get(song.trackId);
+    if (!media) return song;
+    db.update(tracks)
+      .set({
+        previewUrl: media.previewUrl ?? song.previewUrl,
+        appleMusicId: media.appleMusicId ?? song.appleMusicId,
+      })
+      .where(eq(tracks.id, song.trackId))
+      .run();
+    return {
+      ...song,
+      previewUrl: media.previewUrl ?? song.previewUrl,
+      appleMusicId: media.appleMusicId ?? song.appleMusicId,
+    };
+  });
+}
+
 function pickCoverAlbum(albums: LibraryAlbum[]) {
   return [...albums].sort((a, b) => {
     if (b.tabCount !== a.tabCount) return b.tabCount - a.tabCount;
@@ -83,8 +150,8 @@ function pickCoverAlbum(albums: LibraryAlbum[]) {
   })[0];
 }
 
-function queryLibrary(userId: string, instrument?: Instrument): LibraryArtist[] {
-  const db = getDb();
+async function queryLibrary(userId: string, instrument?: Instrument): Promise<LibraryArtist[]> {
+  const db = await getDb();
   const rows = db
     .select({
       artistId: artists.id,
@@ -161,12 +228,12 @@ async function hydrateShelf(userId: string) {
       if (part.trackNumber) {
         const track = hydrated.tracks.find((item) => item.trackNumber === part.trackNumber);
         if (track) {
-          ensureUserTab(userId, track.id, track.title, hydrated.artistName, part.instrument);
+          await ensureUserTab(userId, track.id, track.title, hydrated.artistName, part.instrument);
         }
         continue;
       }
       for (const track of hydrated.tracks) {
-        ensureUserTab(userId, track.id, track.title, hydrated.artistName, "guitar");
+        await ensureUserTab(userId, track.id, track.title, hydrated.artistName, "guitar");
       }
     } catch (error) {
       console.error(error);
@@ -174,8 +241,8 @@ async function hydrateShelf(userId: string) {
   }
 }
 
-function queryLibrarySongs(userId: string, instrument: Instrument): LibrarySong[] {
-  const db = getDb();
+async function queryLibrarySongs(userId: string, instrument: Instrument): Promise<LibrarySong[]> {
+  const db = await getDb();
   return db
     .select({
       tabId: tabs.id,
@@ -208,12 +275,13 @@ function queryLibrarySongs(userId: string, instrument: Instrument): LibrarySong[
 
 export async function getLibrary(userId: string, instrument?: Instrument): Promise<LibraryArtist[]> {
   await hydrateShelf(userId);
-  return queryLibrary(userId, instrument);
+  return await queryLibrary(userId, instrument);
 }
 
 export async function getLibrarySongs(userId: string, instrument: Instrument): Promise<LibrarySong[]> {
   await hydrateShelf(userId);
-  return queryLibrarySongs(userId, instrument);
+  const songs = await queryLibrarySongs(userId, instrument);
+  return fillSongPreviewUrls(songs);
 }
 
 export async function getArtistLibrary(artistId: string, userId: string, instrument?: Instrument) {
@@ -227,7 +295,7 @@ export async function getAlbumWithTracks(albumId: string, userId: string) {
     await ensureItunesAlbum(collectionId);
   }
 
-  const db = getDb();
+  const db = await getDb();
   const album =
     db
       .select({
@@ -275,6 +343,8 @@ export async function getAlbumWithTracks(albumId: string, userId: string) {
     .all()
     .sort((a, b) => a.trackNumber - b.trackNumber);
 
+  const albumTracksWithAudio = await fillAlbumPreviewUrls(album, albumTracks);
+
   const partRows = db
     .select({
       trackId: tabs.trackId,
@@ -296,7 +366,7 @@ export async function getAlbumWithTracks(albumId: string, userId: string) {
 
   return {
     album,
-    tracks: albumTracks.map((track) => ({
+    tracks: albumTracksWithAudio.map((track) => ({
       ...track,
       parts: partsByTrack.get(track.id) ?? emptyParts(),
     })),
@@ -326,8 +396,8 @@ function tabSelect() {
   };
 }
 
-function partsForTrack(trackId: string, userId: string): TrackParts {
-  const db = getDb();
+async function partsForTrack(trackId: string, userId: string): Promise<TrackParts> {
+  const db = await getDb();
   const rows = db
     .select({ id: tabs.id, instrument: tabs.instrument })
     .from(tabs)
@@ -340,8 +410,8 @@ function partsForTrack(trackId: string, userId: string): TrackParts {
   return parts;
 }
 
-function getTabById(tabId: string, userId: string) {
-  const db = getDb();
+async function getTabById(tabId: string, userId: string) {
+  const db = await getDb();
   const row = db
     .select(tabSelect())
     .from(tabs)
@@ -355,12 +425,12 @@ function getTabById(tabId: string, userId: string) {
     ...row,
     instrument: parseInstrument(row.instrument),
     tabTex: row.tabTex ?? placeholderAlphaTex(row.trackTitle, row.artistName, parseInstrument(row.instrument)),
-    parts: partsForTrack(row.trackId, userId),
+    parts: await partsForTrack(row.trackId, userId),
   } satisfies TabView;
 }
 
-function getTabByTrack(trackId: string, userId: string, instrument: Instrument) {
-  const db = getDb();
+async function getTabByTrack(trackId: string, userId: string, instrument: Instrument) {
+  const db = await getDb();
   const row = db
     .select(tabSelect())
     .from(tabs)
@@ -374,7 +444,7 @@ function getTabByTrack(trackId: string, userId: string, instrument: Instrument) 
     ...row,
     instrument: parseInstrument(row.instrument),
     tabTex: row.tabTex ?? placeholderAlphaTex(row.trackTitle, row.artistName, parseInstrument(row.instrument)),
-    parts: partsForTrack(row.trackId, userId),
+    parts: await partsForTrack(row.trackId, userId),
   } satisfies TabView;
 }
 
@@ -385,7 +455,7 @@ export async function getTabForUser(tabId: string, userId: string): Promise<TabV
     if (!hydrated) return null;
     const track = hydrated.tracks.find((item) => item.trackNumber === parsed.trackNumber);
     if (!track) return null;
-    ensureUserTab(userId, track.id, track.title, hydrated.artistName, parsed.instrument);
+    await ensureUserTab(userId, track.id, track.title, hydrated.artistName, parsed.instrument);
     return getTabByTrack(track.id, userId, parsed.instrument);
   }
 

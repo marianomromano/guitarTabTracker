@@ -13,11 +13,11 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL("/sign-up?error=invalid", base), 303);
   }
 
-  if (findUserByEmail(email)) {
+  if (await findUserByEmail(email)) {
     return NextResponse.redirect(new URL("/sign-up?error=exists", base), 303);
   }
 
-  const user = createUser(email, password);
+  const user = await createUser(email, password);
   const response = NextResponse.redirect(new URL("/library", base), 303);
   applySessionCookie(response, user);
   return response;

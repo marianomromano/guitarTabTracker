@@ -3,15 +3,8 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import seed from "@/data/library-seed.json";
+import { resolveDbPath, restoreLibrary } from "@/lib/library-persist";
 import * as schema from "./schema";
-
-function resolveDbPath() {
-  if (process.env.VERCEL) {
-    // The deployment filesystem is read-only except /tmp.
-    return path.join("/tmp", "tabshelf", "library.db");
-  }
-  return path.join(process.cwd(), "data", "library.db");
-}
 
 function ensureSchema(sqlite: InstanceType<typeof Database>) {
   sqlite.exec(`
@@ -171,11 +164,17 @@ function createDb() {
   return drizzle(sqlite, { schema });
 }
 
-let _db: ReturnType<typeof createDb> | null = null;
+type LibraryDb = ReturnType<typeof createDb>;
 
-export function getDb() {
-  if (!_db) {
+let _db: LibraryDb | null = null;
+let _ready: Promise<LibraryDb> | null = null;
+
+export async function getDb() {
+  if (_db) return _db;
+  _ready ??= (async () => {
+    await restoreLibrary();
     _db = createDb();
-  }
-  return _db;
+    return _db;
+  })();
+  return _ready;
 }

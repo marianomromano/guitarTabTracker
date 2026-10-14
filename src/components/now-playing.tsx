@@ -26,10 +26,9 @@ export function NowPlaying() {
     authorizeAppleMusic,
   } = usePlayer();
 
-  if (!track) return null;
-
-  const label =
-    source === "apple"
+  const label = !track
+    ? "Nothing playing"
+    : source === "apple"
       ? "Apple Music"
       : musicConfigured && !musicAuthorized
         ? "Preview · connect Apple Music for the full song"
@@ -41,7 +40,7 @@ export function NowPlaying() {
       className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-white/10 bg-[#171410]/95 px-4 py-3 backdrop-blur-md md:bottom-0"
     >
       <div className="mx-auto flex w-full max-w-3xl items-center gap-3">
-        {track.artworkUrl ? (
+        {track?.artworkUrl ? (
           <Image
             src={track.artworkUrl}
             alt=""
@@ -53,24 +52,25 @@ export function NowPlaying() {
           <div className="size-14 shrink-0 rounded-md bg-muted" />
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{track.title}</p>
+          <p className="truncate text-sm font-medium">{track?.title ?? "No song selected"}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {track.artist} · {label}
+            {track ? `${track.artist} · ${label}` : label}
           </p>
           <input
             type="range"
             min={0}
             max={duration || 30}
             step={0.1}
-            value={Math.min(progress, duration || 30)}
+            value={track ? Math.min(progress, duration || 30) : 0}
+            disabled={!track}
             onChange={(event) => seek(Number(event.target.value))}
             className="mt-1.5 h-1.5 w-full accent-[var(--gold)]"
             aria-label="Song position"
           />
-          <MetronomeControls />
+          {track ? <MetronomeControls /> : null}
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          {musicConfigured && !musicAuthorized ? (
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          {track && musicConfigured && !musicAuthorized ? (
             <Button
               type="button"
               size="sm"
@@ -81,20 +81,20 @@ export function NowPlaying() {
               Connect Apple Music
             </Button>
           ) : null}
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              size="icon-lg"
-              className="size-14 rounded-full bg-gold text-black hover:bg-gold/90 md:size-14 [&_svg]:size-7"
-              onClick={toggle}
-              aria-label={playing ? "Pause" : "Play"}
-            >
-              {playing ? <Pause /> : <Play />}
-            </Button>
-            <p className="font-mono text-[10px] text-muted-foreground">
-              {formatTime(progress)} / {formatTime(duration)}
-            </p>
-          </div>
+          <Button
+            type="button"
+            size="lg"
+            disabled={!track}
+            className="h-14 min-w-28 gap-2 rounded-full bg-gold px-5 text-base text-black hover:bg-gold/90 disabled:opacity-40 [&_svg]:size-6"
+            onClick={toggle}
+            aria-label={playing ? "Pause song" : "Play song"}
+          >
+            {playing ? <Pause /> : <Play />}
+            {playing ? "Pause" : "Play"}
+          </Button>
+          <p className="font-mono text-[10px] text-muted-foreground">
+            {formatTime(track ? progress : 0)} / {formatTime(track ? duration : 0)}
+          </p>
         </div>
       </div>
     </div>

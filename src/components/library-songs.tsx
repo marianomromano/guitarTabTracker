@@ -70,7 +70,7 @@ export function LibrarySongs({ songs }: { songs: LibrarySong[] }) {
 function groupByArtist(songs: LibrarySong[]) {
   const groups: { artistName: string; songs: LibrarySong[] }[] = [];
   for (const song of songs) {
-    const current = groups.at(-1);
+    const current = groups[groups.length - 1];
     if (current?.artistName === song.artistName) {
       current.songs.push(song);
     } else {

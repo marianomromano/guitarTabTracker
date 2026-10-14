@@ -47,6 +47,13 @@ type PlayerContextValue = {
   disconnectAppleMusic: () => Promise<void>;
 };
 
+function isLegacyIos() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const ios = ua.match(/OS (\d+)_/);
+  return Boolean(ios && /iPhone|iPad|iPod/i.test(ua) && Number(ios[1]) < 16);
+}
+
 const PlayerContext = createContext<PlayerContextValue | null>(null);
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
@@ -90,14 +97,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void configureMusicKit().then((ok) => {
-      setMusicConfigured(ok);
-      const music = getMusicKit();
-      if (music) {
-        setMusicAuthorized(Boolean(music.isAuthorized));
-        bindMusicEvents(music);
-      }
-    });
+    if (isLegacyIos()) return;
+    void configureMusicKit()
+      .then((ok) => {
+        setMusicConfigured(ok);
+        const music = getMusicKit();
+        if (music) {
+          setMusicAuthorized(Boolean(music.isAuthorized));
+          bindMusicEvents(music);
+        }
+      })
+      .catch(() => {
+        setMusicConfigured(false);
+      });
   }, [bindMusicEvents]);
 
   useEffect(() => {
@@ -114,16 +126,27 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const playPreview = useCallback((next: PlayableTrack) => {
     const audio = audioRef.current;
     if (!audio || !next.previewUrl) return false;
-    getMusicKit()?.pause();
+    try {
+      getMusicKit()?.pause();
+    } catch {
+      // MusicKit is optional. Old iPad Safari only needs this tap + <audio>.
+    }
     setSource("preview");
     setProgress(0);
     const preview = next.previewUrl.startsWith("/api/preview")
       ? next.previewUrl
       : `/api/preview?url=${encodeURIComponent(next.previewUrl)}`;
-    audio.src = preview;
-    void audio.play().catch((error) => {
-      console.error(error);
-    });
+    audio.setAttribute("playsinline", "true");
+    audio.setAttribute("webkit-playsinline", "true");
+    if (audio.getAttribute("src") !== preview) {
+      audio.src = preview;
+    }
+    const attempt = audio.play();
+    if (attempt && typeof attempt.catch === "function") {
+      attempt.catch((error) => {
+        console.error(error);
+      });
+    }
     return true;
   }, []);
 
@@ -165,14 +188,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setProgress(0);
       // Start the preview in the same tap so iPad autoplay is not blocked.
       // Full Apple Music songs only play when already connected — Play must
-      // not open Apple's login popup.
-      const startedPreview = playPreview(next);
+      // not open Apple's login popup, and must not stop the preview until
+      // the full song is actually playing.
+      playPreview(next);
+
+      if (isLegacyIos()) return;
+
+      const music = getMusicKit();
+      if (!music?.isAuthorized) return;
 
       try {
-        const ready = await configureMusicKit();
-        setMusicConfigured(ready);
-        const music = getMusicKit();
-        if (!ready || !music?.isAuthorized) return;
         bindMusicEvents(music);
 
         let songId = next.appleMusicId;
@@ -181,32 +206,48 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
         if (!songId) return;
 
-        audioRef.current?.pause();
         await music.setQueue({ song: songId });
         await music.play();
+        audioRef.current?.pause();
         setSource("apple");
         setPlaying(true);
       } catch (error) {
         console.error(error);
-        if (!startedPreview) playPreview(next);
       }
     },
     [bindMusicEvents, playPreview],
   );
 
   const toggle = useCallback(() => {
-    if (!track) return;
-    if (source === "apple") {
-      const music = getMusicKit();
-      if (!music) return;
-      if (playing) music.pause();
-      else void music.play();
+    const audio = audioRef.current;
+    const music = getMusicKit();
+    const audioPlaying = Boolean(audio && !audio.paused);
+    const shouldPause = playing || audioPlaying;
+
+    if (shouldPause) {
+      try {
+        music?.pause();
+      } catch {
+        // Preview pause must still work if MusicKit is missing.
+      }
+      audio?.pause();
+      setPlaying(false);
       return;
     }
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (audio.paused) void audio.play();
-    else audio.pause();
+
+    if (!track) return;
+    if (source === "apple" && music) {
+      void music.play();
+      return;
+    }
+    if (audio?.src) {
+      const attempt = audio.play();
+      if (attempt && typeof attempt.catch === "function") {
+        attempt.catch((error) => {
+          console.error(error);
+        });
+      }
+    }
   }, [playing, source, track]);
 
   const seek = useCallback(
@@ -285,8 +326,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       {children}
       <audio
         ref={audioRef}
-        preload="none"
+        preload="auto"
         playsInline
+        // Old iPad Safari ignores playsInline unless this is also set.
+        {...{ "webkit-playsinline": "true" }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => {

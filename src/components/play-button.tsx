@@ -38,13 +38,13 @@ export function PlayButton({
     }
     startTransition(async () => {
       const media = await resolveTrackMediaAction(track.id);
-      if (!media?.appleMusicId && !media?.previewUrl) {
+      if (!media?.previewUrl) {
         setError(true);
         return;
       }
       await play({
         ...track,
-        previewUrl: media.previewUrl ?? track.previewUrl,
+        previewUrl: media.previewUrl,
         appleMusicId: media.appleMusicId ?? track.appleMusicId ?? null,
       });
     });

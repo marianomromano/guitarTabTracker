@@ -5,12 +5,13 @@ import { placeholderAlphaTex } from "@/lib/alphatex";
 import { itunesAlbumId, itunesTrackId, userTabId } from "@/lib/ids";
 import type { Instrument } from "@/lib/instrument";
 import { lookupItunesAlbum } from "@/lib/itunes";
+import { persistLibrary } from "@/lib/library-persist";
 
 export async function ensureItunesAlbum(collectionId: number) {
   const lookup = await lookupItunesAlbum(collectionId);
   if (lookup.tracks.length === 0) return null;
 
-  const db = getDb();
+  const db = await getDb();
   const artistName = lookup.album.artistName;
 
   let artist = db.select().from(artists).where(eq(artists.name, artistName)).get();
@@ -81,17 +82,20 @@ export async function ensureItunesAlbum(collectionId: number) {
   }
 
   const albumTracks = db.select().from(tracks).where(eq(tracks.albumId, album.id)).all();
+  if (existingTracks.length === 0) {
+    await persistLibrary();
+  }
   return { album, tracks: albumTracks, artistName };
 }
 
-export function ensureUserTab(
+export async function ensureUserTab(
   userId: string,
   trackId: string,
   title: string,
   artistName: string,
   instrument: Instrument = "guitar",
 ) {
-  const db = getDb();
+  const db = await getDb();
   const existing = db
     .select()
     .from(tabs)
@@ -113,6 +117,7 @@ export function ensureUserTab(
         createdAt: new Date().toISOString(),
       })
       .run();
+    await persistLibrary();
     return db.select().from(tabs).where(eq(tabs.id, id)).get() ?? { id, userId, trackId, instrument };
   } catch {
     return (

@@ -13,9 +13,9 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL("/sign-in?error=invalid", base), 303);
   }
 
-  const user = authenticateUser(email, password);
+  const user = await authenticateUser(email, password);
   if (!user) {
-    const code = findUserByEmail(email) ? "wrong" : "missing";
+    const code = (await findUserByEmail(email)) ? "wrong" : "missing";
     return NextResponse.redirect(new URL(`/sign-in?error=${code}`, base), 303);
   }
 

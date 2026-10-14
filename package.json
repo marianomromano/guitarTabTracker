@@ -2,6 +2,13 @@
   "name": "guitar-tab-tracker",
   "version": "0.1.0",
   "private": true,
+  "browserslist": [
+    "chrome 64",
+    "edge 79",
+    "firefox 67",
+    "safari 12",
+    "ios 15"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,6 +19,7 @@
   "dependencies": {
     "@coderline/alphatab": "^1.8.4",
     "@neondatabase/serverless": "^1.1.0",
+    "@vercel/blob": "^2.8.1",
     "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

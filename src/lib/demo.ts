@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { getDb } from "@/db";
 import { tabs } from "@/db/schema";
+import { persistLibrary } from "@/lib/library-persist";
 
 export const DEMO_COOKIE = "tabshelf-demo-id";
 const LOCAL_DEMO_VALUE = "local";
@@ -43,10 +44,10 @@ export async function clearDemoCookie() {
   jar.delete(DEMO_COOKIE);
 }
 
-export function claimDemoTabs(signedInUserId: string, demoUserId: string) {
+export async function claimDemoTabs(signedInUserId: string, demoUserId: string) {
   if (signedInUserId === demoUserId) return 0;
 
-  const db = getDb();
+  const db = await getDb();
   const demoTabs = db.select().from(tabs).where(eq(tabs.userId, demoUserId)).all();
   let claimed = 0;
 
@@ -85,6 +86,10 @@ export function claimDemoTabs(signedInUserId: string, demoUserId: string) {
 
   if (demoTabs.length > 0) {
     db.delete(tabs).where(eq(tabs.userId, demoUserId)).run();
+  }
+
+  if (claimed + demoTabs.length > 0) {
+    await persistLibrary();
   }
 
   return claimed + demoTabs.length;

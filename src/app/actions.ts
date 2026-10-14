@@ -24,6 +24,7 @@ import { isAlphaTexFile, isTabFile, placeholderAlphaTex } from "@/lib/alphatex";
 import { ensureItunesAlbum, ensureUserTab } from "@/lib/hydrate";
 import { itunesAlbumId, partTabHref, parseItunesAlbumId, userTabId } from "@/lib/ids";
 import { parseInstrument, parseInstruments } from "@/lib/instrument";
+import { persistLibrary } from "@/lib/library-persist";
 import { rememberShelfPart, rememberShelfParts } from "@/lib/shelf";
 import { parseSoundsliceHash } from "@/lib/soundslice";
 import { revalidatePath } from "next/cache";
@@ -51,7 +52,7 @@ export async function claimDemoLibraryAction() {
   const demoUserId = await readDemoUserId();
   if (!demoUserId) return;
 
-  claimDemoTabs(session.userId, demoUserId);
+  await claimDemoTabs(session.userId, demoUserId);
   await clearDemoCookie();
   revalidatePath("/library");
   revalidatePath("/");
@@ -122,7 +123,7 @@ export async function addTab(input: {
     return { ok: false, error: "Could not save that album. Try again." };
   }
 
-  applyPreviewUrls(hydrated.album.id, lookup.tracks);
+  await applyPreviewUrls(hydrated.album.id, lookup.tracks);
 
   const dbTrack = hydrated.tracks.find((track) =>
     titlesMatch(track.title, matchedTrack.trackName),
@@ -134,7 +135,7 @@ export async function addTab(input: {
   let savedTabId = "";
   let tabHref = "";
   for (const instrument of instruments) {
-    const savedTab = ensureUserTab(
+    const savedTab = await ensureUserTab(
       userId,
       dbTrack.id,
       dbTrack.title,
@@ -166,7 +167,7 @@ export async function addPartAction(input: {
   try {
     const userId = await ensureUserId();
     const instrument = parseInstrument(input.instrument);
-    const db = getDb();
+    const db = await getDb();
     const track = db
       .select({
         id: tracks.id,
@@ -186,7 +187,7 @@ export async function addPartAction(input: {
       return { ok: false, error: "That song is not on this album." };
     }
 
-    const savedTab = ensureUserTab(
+    const savedTab = await ensureUserTab(
       userId,
       track.id,
       track.title,
@@ -287,7 +288,7 @@ async function upsertTrackTab(
   },
 ): Promise<{ ok: true; tabId: string } | { ok: false; error: string }> {
   const userId = await requireUserId();
-  const db = getDb();
+  const db = await getDb();
 
   const track = db
     .select({
@@ -354,6 +355,7 @@ async function upsertTrackTab(
   revalidatePath(`/album/${track.albumId}`);
   revalidatePath(`/tab/${tabId}`);
   revalidatePath(tabHref);
+  await persistLibrary();
   return { ok: true, tabId };
 }
 
@@ -367,7 +369,7 @@ export async function removeTabAction(tabId: string) {
 
 async function removeTab(tabId: string) {
   const userId = await requireUserId();
-  const db = getDb();
+  const db = await getDb();
   const existing = db
     .select({
       id: tabs.id,
@@ -379,6 +381,7 @@ async function removeTab(tabId: string) {
     .get();
 
   db.delete(tabs).where(and(eq(tabs.id, tabId), eq(tabs.userId, userId))).run();
+  await persistLibrary();
   revalidatePath("/");
   if (existing) {
     revalidatePath(`/album/${existing.albumId}`);
@@ -387,7 +390,7 @@ async function removeTab(tabId: string) {
 
 export async function syncAlbumPreviewsAction(albumId: string) {
   await requireUserId();
-  const db = getDb();
+  const db = await getDb();
   const collectionId = parseItunesAlbumId(albumId);
   const album =
     db
@@ -426,7 +429,7 @@ export async function syncAlbumPreviewsAction(albumId: string) {
 
   try {
     const lookup = await lookupItunesAlbum(Number(album.itunesCollectionId));
-    applyPreviewUrls(album.id, lookup.tracks);
+    await applyPreviewUrls(album.id, lookup.tracks);
   } catch (error) {
     console.error(error);
   }
@@ -434,7 +437,7 @@ export async function syncAlbumPreviewsAction(albumId: string) {
 
 export async function fillMissingAlbumTabsAction(albumId: string) {
   const userId = await requireUserId();
-  const db = getDb();
+  const db = await getDb();
   const album = db
     .select({
       id: albums.id,
@@ -451,7 +454,7 @@ export async function fillMissingAlbumTabsAction(albumId: string) {
   if (album.itunesCollectionId) {
     try {
       const lookup = await lookupItunesAlbum(Number(album.itunesCollectionId));
-      applyPreviewUrls(album.id, lookup.tracks);
+      await applyPreviewUrls(album.id, lookup.tracks);
     } catch (error) {
       console.error(error);
     }
@@ -469,7 +472,7 @@ export async function resolveTrackPreviewAction(trackId: string) {
 }
 
 export async function resolveTrackMediaAction(trackId: string) {
-  const db = getDb();
+  const db = await getDb();
   const row = db
     .select({
       id: tracks.id,
@@ -505,17 +508,19 @@ export async function resolveTrackMediaAction(trackId: string) {
 
   if (Object.keys(updates).length) {
     db.update(tracks).set(updates).where(eq(tracks.id, row.id)).run();
+    void persistLibrary();
   }
 
   return { previewUrl, appleMusicId };
 }
 
-function applyPreviewUrls(
+async function applyPreviewUrls(
   albumId: string,
   itunesTracks: { trackName: string; previewUrl: string | null; appleMusicId: string | null }[],
 ) {
-  const db = getDb();
+  const db = await getDb();
   const albumTracks = db.select().from(tracks).where(eq(tracks.albumId, albumId)).all();
+  let wrote = false;
   for (const track of albumTracks) {
     const match = itunesTracks.find((item) => titlesMatch(item.trackName, track.title));
     if (!match) continue;
@@ -524,12 +529,14 @@ function applyPreviewUrls(
     if (!track.appleMusicId && match.appleMusicId) updates.appleMusicId = match.appleMusicId;
     if (Object.keys(updates).length) {
       db.update(tracks).set(updates).where(eq(tracks.id, track.id)).run();
+      wrote = true;
     }
   }
+  if (wrote) await persistLibrary();
 }
 
 async function linkMissingAlbumTabs(userId: string, albumId: string, artistName: string) {
-  const db = getDb();
+  const db = await getDb();
   const album = db
     .select({ itunesCollectionId: albums.itunesCollectionId })
     .from(albums)
@@ -562,7 +569,7 @@ async function linkMissingAlbumTabs(userId: string, albumId: string, artistName:
       .where(and(eq(tabs.userId, userId), eq(tabs.trackId, track.id), eq(tabs.instrument, "guitar")))
       .get();
     if (existing) continue;
-    ensureUserTab(userId, track.id, track.title, artistName, "guitar");
+    await ensureUserTab(userId, track.id, track.title, artistName, "guitar");
     added.push({ trackNumber: track.trackNumber });
   }
 
