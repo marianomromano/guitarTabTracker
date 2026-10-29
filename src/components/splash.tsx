@@ -33,7 +33,7 @@ export function Splash({ isDemo }: { isDemo: boolean }) {
     <div className="relative">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_at_top,rgba(201,162,74,0.16),transparent_58%)]" />
       <div className="relative mx-auto w-full max-w-5xl px-4 pt-16 pb-10 sm:pt-24">
-        <p className="text-[11px] tracking-[0.28em] text-gold uppercase">TabShelf</p>
+        <p className="text-[11px] tracking-[0.28em] text-primary uppercase">TabShelf</p>
         <h1 className="font-heading mt-3 max-w-3xl text-4xl leading-tight text-balance sm:text-5xl">
           Guitar, bass, and drum parts, filed with the records they belong to.
         </h1>
@@ -56,7 +56,7 @@ export function Splash({ isDemo }: { isDemo: boolean }) {
             asChild
             size="lg"
             variant="outline"
-            className="w-full border-white/15 px-5 sm:w-auto"
+            className="w-full border-border px-5 sm:w-auto"
           >
             <Link href="/sign-in">Sign in to save your shelf</Link>
           </Button>
@@ -67,13 +67,13 @@ export function Splash({ isDemo }: { isDemo: boolean }) {
             : "The demo lets you search, add albums, and open tabs with no account."}
           {" "}
           No account yet?{" "}
-          <Link href="/sign-up" className="text-gold underline-offset-4 hover:underline">
+          <Link href="/sign-up" className="text-primary underline-offset-4 hover:underline">
             Create one
           </Link>
           .
           {" "}
           Need to get in pitch first?{" "}
-          <Link href="/tuner" className="text-gold underline-offset-4 hover:underline">
+          <Link href="/tuner" className="text-primary underline-offset-4 hover:underline">
             Open the tuner
           </Link>
           .
@@ -83,9 +83,9 @@ export function Splash({ isDemo }: { isDemo: boolean }) {
           {STEPS.map((step) => (
             <div
               key={step.title}
-              className="rounded-2xl border border-white/8 bg-black/20 p-5"
+              className="rounded-2xl border border-border bg-card p-5"
             >
-              <span className="flex size-9 items-center justify-center rounded-full bg-gold/15 text-gold">
+              <span className="flex size-9 items-center justify-center rounded-full bg-gold/15 text-primary">
                 <step.icon className="size-4" />
               </span>
               <h2 className="mt-4 text-base">{step.title}</h2>
@@ -95,7 +95,7 @@ export function Splash({ isDemo }: { isDemo: boolean }) {
         </div>
 
         <div className="mt-16">
-          <p className="text-[11px] tracking-[0.28em] text-gold uppercase">
+          <p className="text-[11px] tracking-[0.28em] text-primary uppercase">
             How it looks
           </p>
           <h2 className="font-heading mt-2 text-2xl">A shelf, not a playlist</h2>
@@ -111,7 +111,7 @@ export function Splash({ isDemo }: { isDemo: boolean }) {
                     </p>
                     <p className="font-heading mt-8 text-lg text-amber-50">{record.title}</p>
                   </div>
-                  <p className="mt-2 truncate text-sm text-zinc-200">{record.artist}</p>
+                  <p className="mt-2 truncate text-sm text-foreground">{record.artist}</p>
                   <p className="truncate text-xs text-muted-foreground">{record.title}</p>
                 </div>
               ))}

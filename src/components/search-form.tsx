@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
   return (
     <form action="/search" method="get" className="mb-8 flex gap-2">
-      <label className="flex min-h-12 flex-1 items-center gap-2 rounded-lg border border-input bg-black/20 px-3">
+      <label className="flex min-h-16 flex-1 items-center gap-2 rounded-lg border border-input bg-card px-3">
         <Search className="size-5 shrink-0 text-muted-foreground" />
         <Input
           type="search"
@@ -16,7 +16,7 @@ export function SearchForm({ initialQuery = "" }: { initialQuery?: string }) {
           enterKeyHint="search"
         />
       </label>
-      <Button type="submit" className="bg-gold text-black hover:bg-gold/90">
+      <Button type="submit" className="h-16 px-6 text-lg md:h-16 bg-gold text-black hover:bg-gold/90">
         Search
       </Button>
     </form>

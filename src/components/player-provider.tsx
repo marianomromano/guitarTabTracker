@@ -23,6 +23,7 @@ export type PlayableTrack = {
   id: string;
   title: string;
   artist: string;
+  albumTitle?: string | null;
   artworkUrl: string | null;
   previewUrl: string | null;
   appleMusicId: string | null;
@@ -38,11 +39,14 @@ type PlayerContextValue = {
   source: PlaybackSource;
   musicConfigured: boolean;
   musicAuthorized: boolean;
+  nowPlayingOpen: boolean;
   play: (track: PlayableTrack) => Promise<void>;
   toggle: () => void;
   seek: (time: number) => void;
   stop: () => void;
   getPlaybackTime: () => number;
+  openNowPlaying: () => void;
+  closeNowPlaying: () => void;
   authorizeAppleMusic: () => Promise<boolean>;
   disconnectAppleMusic: () => Promise<void>;
 };
@@ -66,8 +70,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [source, setSource] = useState<PlaybackSource>(null);
   const [musicConfigured, setMusicConfigured] = useState(false);
   const [musicAuthorized, setMusicAuthorized] = useState(false);
+  const [nowPlayingOpen, setNowPlayingOpen] = useState(false);
   const sourceRef = useRef<PlaybackSource>(null);
-  sourceRef.current = source;
+  useEffect(() => {
+    sourceRef.current = source;
+  }, [source]);
 
   const bindMusicEvents = useCallback((music: NonNullable<ReturnType<typeof getMusicKit>>) => {
     if (listenersBound.current || !window.MusicKit) return;
@@ -291,6 +298,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setSource(null);
     setProgress(0);
     setDuration(0);
+    setNowPlayingOpen(false);
+  }, []);
+
+  const openNowPlaying = useCallback(() => {
+    setNowPlayingOpen(true);
+  }, []);
+
+  const closeNowPlaying = useCallback(() => {
+    setNowPlayingOpen(false);
   }, []);
 
   const value = useMemo<PlayerContextValue>(
@@ -302,21 +318,27 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       source,
       musicConfigured,
       musicAuthorized,
+      nowPlayingOpen,
       play,
       toggle,
       seek,
       stop,
       getPlaybackTime,
+      openNowPlaying,
+      closeNowPlaying,
       authorizeAppleMusic,
       disconnectAppleMusic,
     }),
     [
       authorizeAppleMusic,
+      closeNowPlaying,
       disconnectAppleMusic,
       duration,
       getPlaybackTime,
       musicAuthorized,
       musicConfigured,
+      nowPlayingOpen,
+      openNowPlaying,
       play,
       playing,
       progress,

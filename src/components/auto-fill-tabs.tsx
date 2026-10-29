@@ -17,7 +17,7 @@ export function AutoFillTabs({ albumId, missing }: { albumId: string; missing: n
       <Button
         type="button"
         variant="outline"
-        className="border-white/15"
+        className="border-border"
         disabled={pending}
         onClick={() => {
           setError(null);

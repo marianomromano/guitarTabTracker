@@ -11,7 +11,6 @@ import {
   type InstrumentParts,
 } from "@/lib/instrument";
 import { lookupItunesAlbum, searchItunesSong, titlesMatch } from "@/lib/itunes";
-import { readShelfParts } from "@/lib/shelf";
 
 export type LibraryAlbum = {
   id: string;
@@ -87,18 +86,17 @@ async function fillAlbumPreviewUrls<T extends { id: string; title: string; previ
   try {
     const lookup = await lookupItunesAlbum(Number(album.itunesCollectionId));
     const db = await getDb();
-    return albumTracks.map((track) => {
+    return await Promise.all(albumTracks.map(async (track) => {
       if (track.previewUrl && track.appleMusicId) return track;
       const match = lookup.tracks.find((item) => titlesMatch(item.trackName, track.title));
       if (!match?.previewUrl && !match?.appleMusicId) return track;
       const previewUrl = track.previewUrl ?? match.previewUrl;
       const appleMusicId = track.appleMusicId ?? match.appleMusicId;
-      db.update(tracks)
+      (await db.update(tracks)
         .set({ previewUrl, appleMusicId })
-        .where(eq(tracks.id, track.id))
-        .run();
+        .where(eq(tracks.id, track.id)));
       return { ...track, previewUrl, appleMusicId };
-    });
+    }));
   } catch (error) {
     console.error(error);
     return albumTracks;
@@ -125,22 +123,21 @@ async function fillSongPreviewUrls(songs: LibrarySong[]): Promise<LibrarySong[]>
   if (found.size === 0) return songs;
 
   const db = await getDb();
-  return songs.map((song) => {
+  return Promise.all(songs.map(async (song) => {
     const media = found.get(song.trackId);
     if (!media) return song;
-    db.update(tracks)
+    (await db.update(tracks)
       .set({
         previewUrl: media.previewUrl ?? song.previewUrl,
         appleMusicId: media.appleMusicId ?? song.appleMusicId,
       })
-      .where(eq(tracks.id, song.trackId))
-      .run();
+      .where(eq(tracks.id, song.trackId)));
     return {
       ...song,
       previewUrl: media.previewUrl ?? song.previewUrl,
       appleMusicId: media.appleMusicId ?? song.appleMusicId,
     };
-  });
+  }));
 }
 
 function pickCoverAlbum(albums: LibraryAlbum[]) {
@@ -152,7 +149,7 @@ function pickCoverAlbum(albums: LibraryAlbum[]) {
 
 async function queryLibrary(userId: string, instrument?: Instrument): Promise<LibraryArtist[]> {
   const db = await getDb();
-  const rows = db
+  const rows = (await db
     .select({
       artistId: artists.id,
       artistName: artists.name,
@@ -168,8 +165,7 @@ async function queryLibrary(userId: string, instrument?: Instrument): Promise<Li
     .innerJoin(tracks, eq(tabs.trackId, tracks.id))
     .innerJoin(albums, eq(tracks.albumId, albums.id))
     .innerJoin(artists, eq(albums.artistId, artists.id))
-    .where(eq(tabs.userId, userId))
-    .all()
+    .where(eq(tabs.userId, userId)))
     .filter((row) => !instrument || row.instrument === instrument);
 
   const byArtist = new Map<string, LibraryArtist>();
@@ -219,31 +215,9 @@ async function queryLibrary(userId: string, instrument?: Instrument): Promise<Li
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-async function hydrateShelf(userId: string) {
-  const shelf = await readShelfParts();
-  for (const part of shelf) {
-    try {
-      const hydrated = await ensureItunesAlbum(part.collectionId);
-      if (!hydrated) continue;
-      if (part.trackNumber) {
-        const track = hydrated.tracks.find((item) => item.trackNumber === part.trackNumber);
-        if (track) {
-          await ensureUserTab(userId, track.id, track.title, hydrated.artistName, part.instrument);
-        }
-        continue;
-      }
-      for (const track of hydrated.tracks) {
-        await ensureUserTab(userId, track.id, track.title, hydrated.artistName, "guitar");
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-}
-
 async function queryLibrarySongs(userId: string, instrument: Instrument): Promise<LibrarySong[]> {
   const db = await getDb();
-  return db
+  return (await db
     .select({
       tabId: tabs.id,
       trackId: tracks.id,
@@ -262,8 +236,7 @@ async function queryLibrarySongs(userId: string, instrument: Instrument): Promis
     .innerJoin(tracks, eq(tabs.trackId, tracks.id))
     .innerJoin(albums, eq(tracks.albumId, albums.id))
     .innerJoin(artists, eq(albums.artistId, artists.id))
-    .where(and(eq(tabs.userId, userId), eq(tabs.instrument, instrument)))
-    .all()
+    .where(and(eq(tabs.userId, userId), eq(tabs.instrument, instrument))))
     .map((row) => ({ ...row, instrument: parseInstrument(row.instrument) }))
     .sort(
       (a, b) =>
@@ -274,12 +247,10 @@ async function queryLibrarySongs(userId: string, instrument: Instrument): Promis
 }
 
 export async function getLibrary(userId: string, instrument?: Instrument): Promise<LibraryArtist[]> {
-  await hydrateShelf(userId);
   return await queryLibrary(userId, instrument);
 }
 
 export async function getLibrarySongs(userId: string, instrument: Instrument): Promise<LibrarySong[]> {
-  await hydrateShelf(userId);
   const songs = await queryLibrarySongs(userId, instrument);
   return fillSongPreviewUrls(songs);
 }
@@ -297,7 +268,7 @@ export async function getAlbumWithTracks(albumId: string, userId: string) {
 
   const db = await getDb();
   const album =
-    db
+    (await db
       .select({
         id: albums.id,
         title: albums.title,
@@ -309,10 +280,9 @@ export async function getAlbumWithTracks(albumId: string, userId: string) {
       })
       .from(albums)
       .innerJoin(artists, eq(albums.artistId, artists.id))
-      .where(eq(albums.id, albumId))
-      .get() ??
+      .where(eq(albums.id, albumId)).limit(1))[0] ??
     (collectionId
-      ? db
+      ? (await db
           .select({
             id: albums.id,
             title: albums.title,
@@ -324,13 +294,12 @@ export async function getAlbumWithTracks(albumId: string, userId: string) {
           })
           .from(albums)
           .innerJoin(artists, eq(albums.artistId, artists.id))
-          .where(eq(albums.itunesCollectionId, String(collectionId)))
-          .get()
+          .where(eq(albums.itunesCollectionId, String(collectionId))).limit(1))[0]
       : undefined);
 
   if (!album) return null;
 
-  const albumTracks = db
+  const albumTracks = (await db
     .select({
       id: tracks.id,
       title: tracks.title,
@@ -339,13 +308,12 @@ export async function getAlbumWithTracks(albumId: string, userId: string) {
       appleMusicId: tracks.appleMusicId,
     })
     .from(tracks)
-    .where(eq(tracks.albumId, album.id))
-    .all()
+    .where(eq(tracks.albumId, album.id)))
     .sort((a, b) => a.trackNumber - b.trackNumber);
 
   const albumTracksWithAudio = await fillAlbumPreviewUrls(album, albumTracks);
 
-  const partRows = db
+  const partRows = (await db
     .select({
       trackId: tabs.trackId,
       tabId: tabs.id,
@@ -353,8 +321,7 @@ export async function getAlbumWithTracks(albumId: string, userId: string) {
     })
     .from(tabs)
     .innerJoin(tracks, eq(tabs.trackId, tracks.id))
-    .where(and(eq(tracks.albumId, album.id), eq(tabs.userId, userId)))
-    .all();
+    .where(and(eq(tracks.albumId, album.id), eq(tabs.userId, userId))));
 
   const partsByTrack = new Map<string, TrackParts>();
   for (const row of partRows) {
@@ -398,11 +365,10 @@ function tabSelect() {
 
 async function partsForTrack(trackId: string, userId: string): Promise<TrackParts> {
   const db = await getDb();
-  const rows = db
+  const rows = (await db
     .select({ id: tabs.id, instrument: tabs.instrument })
     .from(tabs)
-    .where(and(eq(tabs.trackId, trackId), eq(tabs.userId, userId)))
-    .all();
+    .where(and(eq(tabs.trackId, trackId), eq(tabs.userId, userId))));
   const parts = emptyParts();
   for (const row of rows) {
     parts[parseInstrument(row.instrument)] = row.id;
@@ -412,14 +378,13 @@ async function partsForTrack(trackId: string, userId: string): Promise<TrackPart
 
 async function getTabById(tabId: string, userId: string) {
   const db = await getDb();
-  const row = db
+  const row = (await db
     .select(tabSelect())
     .from(tabs)
     .innerJoin(tracks, eq(tabs.trackId, tracks.id))
     .innerJoin(albums, eq(tracks.albumId, albums.id))
     .innerJoin(artists, eq(albums.artistId, artists.id))
-    .where(and(eq(tabs.id, tabId), eq(tabs.userId, userId)))
-    .get();
+    .where(and(eq(tabs.id, tabId), eq(tabs.userId, userId))).limit(1))[0];
   if (!row) return null;
   return {
     ...row,
@@ -431,14 +396,13 @@ async function getTabById(tabId: string, userId: string) {
 
 async function getTabByTrack(trackId: string, userId: string, instrument: Instrument) {
   const db = await getDb();
-  const row = db
+  const row = (await db
     .select(tabSelect())
     .from(tabs)
     .innerJoin(tracks, eq(tabs.trackId, tracks.id))
     .innerJoin(albums, eq(tracks.albumId, albums.id))
     .innerJoin(artists, eq(albums.artistId, artists.id))
-    .where(and(eq(tabs.trackId, trackId), eq(tabs.userId, userId), eq(tabs.instrument, instrument)))
-    .get();
+    .where(and(eq(tabs.trackId, trackId), eq(tabs.userId, userId), eq(tabs.instrument, instrument))).limit(1))[0];
   if (!row) return null;
   return {
     ...row,

@@ -1,7 +1,6 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { ensureDemoCookie, readDemoUserId } from "@/lib/demo";
-import { readSessionCookie } from "@/lib/session";
+import { createClient } from "@/lib/supabase/server";
 
 export type Session = {
   userId: string | null;
@@ -11,44 +10,30 @@ export type Session = {
 };
 
 export const getSession = cache(async (): Promise<Session> => {
-  const signedIn = await readSessionCookie();
-  if (signedIn) {
-    return {
-      userId: signedIn.userId,
-      email: signedIn.email,
-      isSignedIn: true,
-      isDemo: false,
-    };
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error && error.name !== "AuthSessionMissingError" && error.status !== 401 && error.status !== 403) {
+    throw error;
   }
-
-  const demoUserId = await readDemoUserId();
-  if (demoUserId) {
-    return {
-      userId: demoUserId,
-      email: null,
-      isSignedIn: false,
-      isDemo: true,
-    };
-  }
-
   return {
-    userId: null,
-    email: null,
-    isSignedIn: false,
-    isDemo: false,
+    userId: user?.id ?? null,
+    email: user?.email ?? null,
+    isSignedIn: Boolean(user && !user.is_anonymous),
+    isDemo: Boolean(user?.is_anonymous),
   };
 });
 
 export async function requireUserId() {
   const session = await getSession();
-  if (!session.userId) {
-    redirect("/");
-  }
+  if (!session.userId) redirect("/");
   return session.userId;
 }
 
 export async function ensureUserId() {
   const session = await getSession();
   if (session.userId) return session.userId;
-  return ensureDemoCookie();
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInAnonymously();
+  if (error || !data.user) throw error ?? new Error("Could not start a demo session.");
+  return data.user.id;
 }

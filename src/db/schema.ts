@@ -1,17 +1,6 @@
-import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { integer, pgTable, text, uuid, uniqueIndex } from "drizzle-orm/pg-core";
 
-export const users = sqliteTable(
-  "users",
-  {
-    id: text("id").primaryKey(),
-    email: text("email").notNull(),
-    passwordHash: text("password_hash").notNull(),
-    createdAt: text("created_at").notNull(),
-  },
-  (table) => [uniqueIndex("users_email_idx").on(table.email)],
-);
-
-export const artists = sqliteTable(
+export const artists = pgTable(
   "artists",
   {
     id: text("id").primaryKey(),
@@ -21,7 +10,7 @@ export const artists = sqliteTable(
   (table) => [uniqueIndex("artists_name_idx").on(table.name)],
 );
 
-export const albums = sqliteTable(
+export const albums = pgTable(
   "albums",
   {
     id: text("id").primaryKey(),
@@ -36,7 +25,7 @@ export const albums = sqliteTable(
   (table) => [uniqueIndex("albums_itunes_idx").on(table.itunesCollectionId)],
 );
 
-export const tracks = sqliteTable("tracks", {
+export const tracks = pgTable("tracks", {
   id: text("id").primaryKey(),
   albumId: text("album_id")
     .notNull()
@@ -46,13 +35,13 @@ export const tracks = sqliteTable("tracks", {
   previewUrl: text("preview_url"),
   youtubeVideoId: text("youtube_video_id"),
   appleMusicId: text("apple_music_id"),
-});
+}, table => [uniqueIndex("tracks_album_number_idx").on(table.albumId, table.trackNumber)]);
 
-export const tabs = sqliteTable(
+export const tabs = pgTable(
   "tabs",
   {
     id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
+    userId: uuid("user_id").notNull(),
     trackId: text("track_id")
       .notNull()
       .references(() => tracks.id, { onDelete: "cascade" }),

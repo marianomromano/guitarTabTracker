@@ -27,7 +27,6 @@ export function useMetronome({
   const [bpm, setBpm] = useState<number | null>(null);
   const [detecting, setDetecting] = useState(false);
   const [pulse, setPulse] = useState(false);
-  const bpmRef = useRef<number | null>(null);
   const offsetRef = useRef(0);
   const lastBeatRef = useRef(-1);
   const audioRef = useRef<AudioContext | null>(null);
@@ -35,8 +34,9 @@ export function useMetronome({
   const manualRef = useRef(false);
   const volumeRef = useRef(volume);
 
-  bpmRef.current = bpm;
-  volumeRef.current = volume;
+  useEffect(() => {
+    volumeRef.current = volume;
+  }, [volume]);
 
   const audioContext = useCallback(() => {
     if (audioRef.current && audioRef.current.state !== "closed") {
@@ -50,24 +50,26 @@ export function useMetronome({
     return audioRef.current;
   }, []);
 
+  const [previousTrack, setPreviousTrack] = useState(trackId);
+  if (previousTrack !== trackId) {
+    setPreviousTrack(trackId);
+    setBpm(null);
+    setDetecting(false);
+  }
   useEffect(() => {
     manualRef.current = false;
     offsetRef.current = 0;
     lastBeatRef.current = -1;
-    setBpm(null);
-    setDetecting(false);
   }, [trackId]);
 
   useEffect(() => {
     if (!enabled || manualRef.current) return;
-    if (!previewUrl) {
-      setBpm((current) => current ?? DEFAULT_BPM);
-      setDetecting(false);
-      return;
-    }
     let cancelled = false;
-    setDetecting(true);
-    void analyzePreviewBpm(previewUrl)
+    void Promise.resolve().then(() => {
+      if (cancelled) return null;
+      setDetecting(Boolean(previewUrl));
+      return previewUrl ? analyzePreviewBpm(previewUrl) : null;
+    })
       .then((guess) => {
         if (cancelled || manualRef.current) return;
         setDetecting(false);

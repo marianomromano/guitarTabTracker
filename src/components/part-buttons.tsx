@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   INSTRUMENT_LABEL,
   INSTRUMENT_LETTER,
@@ -31,9 +31,11 @@ export function PartButtons({
   const [saved, setSaved] = useState(parts);
   const [pending, setPending] = useState<Partial<Record<Instrument, boolean>>>({});
 
-  useEffect(() => {
+  const [previousInput, setPreviousInput] = useState(parts);
+  if (previousInput !== parts) {
+    setPreviousInput(parts);
     setSaved(parts);
-  }, [parts]);
+  }
 
   async function addPart(instrument: Instrument) {
     setPending((current) => ({ ...current, [instrument]: true }));
@@ -110,8 +112,8 @@ export function PartButtons({
           "flex size-12 items-center justify-center rounded-lg text-sm font-semibold",
           isSaved
             ? "bg-gold text-black"
-            : "text-muted-foreground ring-1 ring-white/15 hover:bg-white/5 hover:text-foreground",
-          active === instrument && "ring-2 ring-white",
+            : "text-muted-foreground ring-1 ring-border hover:bg-accent/50 hover:text-foreground",
+          active === instrument && "ring-2 ring-primary",
           isPending && "opacity-70",
         );
 

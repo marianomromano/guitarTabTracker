@@ -1,16 +1,10 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { albums, artists, tabs, tracks } from "@/db/schema";
 import { redirect } from "next/navigation";
-import { ensureUserId, getSession, requireUserId } from "@/lib/auth";
-import {
-  claimDemoTabs,
-  clearDemoCookie,
-  ensureDemoCookie,
-  readDemoUserId,
-} from "@/lib/demo";
+import { ensureUserId, requireUserId } from "@/lib/auth";
 import {
   lookupItunesAlbum,
   searchItunesAlbums,
@@ -20,12 +14,11 @@ import {
   type ItunesAlbumOption,
   type ItunesSongOption,
 } from "@/lib/itunes";
-import { isAlphaTexFile, isTabFile, placeholderAlphaTex } from "@/lib/alphatex";
+import { isAlphaTexFile, isTabFile } from "@/lib/alphatex";
 import { ensureItunesAlbum, ensureUserTab } from "@/lib/hydrate";
 import { itunesAlbumId, partTabHref, parseItunesAlbumId, userTabId } from "@/lib/ids";
 import { parseInstrument, parseInstruments } from "@/lib/instrument";
-import { persistLibrary } from "@/lib/library-persist";
-import { forgetShelfPart, rememberShelfPart, rememberShelfParts } from "@/lib/shelf";
+import { forgetShelfAlbum, forgetShelfPart, rememberShelfPart, rememberShelfParts } from "@/lib/shelf";
 import { parseSoundsliceHash } from "@/lib/soundslice";
 import { revalidatePath } from "next/cache";
 
@@ -41,22 +34,10 @@ function saveFailed(error: unknown, fallback: string): { ok: false; error: strin
 
 
 export async function startDemoAction() {
-  await ensureDemoCookie();
+  await ensureUserId();
   redirect("/library");
 }
 
-export async function claimDemoLibraryAction() {
-  const session = await getSession();
-  if (!session.isSignedIn || !session.userId) return;
-
-  const demoUserId = await readDemoUserId();
-  if (!demoUserId) return;
-
-  await claimDemoTabs(session.userId, demoUserId);
-  await clearDemoCookie();
-  revalidatePath("/library");
-  revalidatePath("/");
-}
 
 export async function addTabAction(input: {
   title: string;
@@ -168,7 +149,7 @@ export async function addPartAction(input: {
     const userId = await ensureUserId();
     const instrument = parseInstrument(input.instrument);
     const db = await getDb();
-    const track = db
+    const track = (await db
       .select({
         id: tracks.id,
         title: tracks.title,
@@ -180,8 +161,7 @@ export async function addPartAction(input: {
       .from(tracks)
       .innerJoin(albums, eq(tracks.albumId, albums.id))
       .innerJoin(artists, eq(albums.artistId, artists.id))
-      .where(eq(tracks.id, input.trackId))
-      .get();
+      .where(eq(tracks.id, input.trackId)).limit(1))[0];
 
     if (!track) {
       return { ok: false, error: "That song is not on this album." };
@@ -222,7 +202,7 @@ export async function removePartAction(input: {
     const userId = await ensureUserId();
     const instrument = parseInstrument(input.instrument);
     const db = await getDb();
-    const track = db
+    const track = (await db
       .select({
         id: tracks.id,
         trackNumber: tracks.trackNumber,
@@ -231,19 +211,16 @@ export async function removePartAction(input: {
       })
       .from(tracks)
       .innerJoin(albums, eq(tracks.albumId, albums.id))
-      .where(eq(tracks.id, input.trackId))
-      .get();
+      .where(eq(tracks.id, input.trackId)).limit(1))[0];
 
     if (!track) {
       return { ok: false, error: "That song is not on this album." };
     }
 
-    db.delete(tabs)
+    (await db.delete(tabs)
       .where(
         and(eq(tabs.userId, userId), eq(tabs.trackId, track.id), eq(tabs.instrument, instrument)),
-      )
-      .run();
-    await persistLibrary();
+      ));
 
     if (track.itunesCollectionId) {
       await forgetShelfPart(Number(track.itunesCollectionId), track.trackNumber, instrument);
@@ -344,7 +321,7 @@ async function upsertTrackTab(
   const userId = await requireUserId();
   const db = await getDb();
 
-  const track = db
+  const track = (await db
     .select({
       id: tracks.id,
       title: tracks.title,
@@ -356,43 +333,26 @@ async function upsertTrackTab(
     .from(tracks)
     .innerJoin(albums, eq(tracks.albumId, albums.id))
     .innerJoin(artists, eq(albums.artistId, artists.id))
-    .where(eq(tracks.id, trackId))
-    .get();
+    .where(eq(tracks.id, trackId)).limit(1))[0];
 
   if (!track) {
     return { ok: false, error: "That song is not on this album." };
   }
 
-  const existingTab = db
-    .select()
-    .from(tabs)
-    .where(
-      and(eq(tabs.userId, userId), eq(tabs.trackId, track.id), eq(tabs.instrument, instrument)),
-    )
-    .get();
-
-  let tabId: string;
-  if (existingTab) {
-    db.update(tabs).set(values).where(eq(tabs.id, existingTab.id)).run();
-    tabId = existingTab.id;
-  } else {
-    tabId = userTabId(userId, track.id, instrument);
-    db.insert(tabs)
-      .values({
-        id: tabId,
-        userId,
-        trackId: track.id,
-        instrument,
-        songsterrId: 0,
-        songsterrUrl: "",
-        tabTex: values.tabTex ?? placeholderAlphaTex(track.title, track.artistName, instrument),
-        tabFile: values.tabFile,
-        tabFilename: values.tabFilename,
-        soundsliceHash: values.soundsliceHash,
-        createdAt: new Date().toISOString(),
-      })
-      .run();
-  }
+  const [savedTab] = await db.insert(tabs).values({
+    id: userTabId(userId, track.id, instrument),
+    userId,
+    trackId: track.id,
+    instrument,
+    songsterrId: 0,
+    songsterrUrl: "",
+    ...values,
+    createdAt: new Date().toISOString(),
+  }).onConflictDoUpdate({
+    target: [tabs.userId, tabs.trackId, tabs.instrument],
+    set: values,
+  }).returning({ id: tabs.id });
+  const tabId = savedTab.id;
 
   if (track.itunesCollectionId) {
     await rememberShelfPart(Number(track.itunesCollectionId), track.trackNumber, instrument);
@@ -409,7 +369,6 @@ async function upsertTrackTab(
   revalidatePath(`/album/${track.albumId}`);
   revalidatePath(`/tab/${tabId}`);
   revalidatePath(tabHref);
-  await persistLibrary();
   return { ok: true, tabId };
 }
 
@@ -424,18 +383,16 @@ export async function removeTabAction(tabId: string) {
 async function removeTab(tabId: string) {
   const userId = await requireUserId();
   const db = await getDb();
-  const existing = db
+  const existing = (await db
     .select({
       id: tabs.id,
       albumId: tracks.albumId,
     })
     .from(tabs)
     .innerJoin(tracks, eq(tabs.trackId, tracks.id))
-    .where(and(eq(tabs.id, tabId), eq(tabs.userId, userId)))
-    .get();
+    .where(and(eq(tabs.id, tabId), eq(tabs.userId, userId))).limit(1))[0];
 
-  db.delete(tabs).where(and(eq(tabs.id, tabId), eq(tabs.userId, userId))).run();
-  await persistLibrary();
+  (await db.delete(tabs).where(and(eq(tabs.id, tabId), eq(tabs.userId, userId))));
   revalidatePath("/");
   if (existing) {
     revalidatePath(`/album/${existing.albumId}`);
@@ -447,36 +404,33 @@ export async function syncAlbumPreviewsAction(albumId: string) {
   const db = await getDb();
   const collectionId = parseItunesAlbumId(albumId);
   const album =
-    db
+    (await db
       .select({
         id: albums.id,
         itunesCollectionId: albums.itunesCollectionId,
       })
       .from(albums)
-      .where(eq(albums.id, albumId))
-      .get() ??
+      .where(eq(albums.id, albumId)).limit(1))[0] ??
     (collectionId
-      ? db
+      ? (await db
           .select({
             id: albums.id,
             itunesCollectionId: albums.itunesCollectionId,
           })
           .from(albums)
-          .where(eq(albums.itunesCollectionId, String(collectionId)))
-          .get()
+          .where(eq(albums.itunesCollectionId, String(collectionId))).limit(1))[0]
       : undefined);
 
   if (!album?.itunesCollectionId) return;
 
-  const needsMedia = db
+  const needsMedia = (await db
     .select({
       id: tracks.id,
       previewUrl: tracks.previewUrl,
       appleMusicId: tracks.appleMusicId,
     })
     .from(tracks)
-    .where(eq(tracks.albumId, albumId))
-    .all()
+    .where(eq(tracks.albumId, album.id)))
     .some((track) => !track.previewUrl || !track.appleMusicId);
 
   if (!needsMedia) return;
@@ -492,7 +446,7 @@ export async function syncAlbumPreviewsAction(albumId: string) {
 export async function fillMissingAlbumTabsAction(albumId: string) {
   const userId = await requireUserId();
   const db = await getDb();
-  const album = db
+  const album = (await db
     .select({
       id: albums.id,
       artistName: artists.name,
@@ -500,8 +454,7 @@ export async function fillMissingAlbumTabsAction(albumId: string) {
     })
     .from(albums)
     .innerJoin(artists, eq(albums.artistId, artists.id))
-    .where(eq(albums.id, albumId))
-    .get();
+    .where(eq(albums.id, albumId)).limit(1))[0];
 
   if (!album) return { ok: false as const, linked: 0 };
 
@@ -527,7 +480,7 @@ export async function resolveTrackPreviewAction(trackId: string) {
 
 export async function resolveTrackMediaAction(trackId: string) {
   const db = await getDb();
-  const row = db
+  const row = (await db
     .select({
       id: tracks.id,
       title: tracks.title,
@@ -539,8 +492,7 @@ export async function resolveTrackMediaAction(trackId: string) {
     .from(tracks)
     .innerJoin(albums, eq(tracks.albumId, albums.id))
     .innerJoin(artists, eq(albums.artistId, artists.id))
-    .where(eq(tracks.id, trackId))
-    .get();
+    .where(eq(tracks.id, trackId)).limit(1))[0];
 
   if (!row) return null;
 
@@ -561,8 +513,7 @@ export async function resolveTrackMediaAction(trackId: string) {
   }
 
   if (Object.keys(updates).length) {
-    db.update(tracks).set(updates).where(eq(tracks.id, row.id)).run();
-    void persistLibrary();
+    (await db.update(tracks).set(updates).where(eq(tracks.id, row.id)));
   }
 
   return { previewUrl, appleMusicId };
@@ -573,8 +524,7 @@ async function applyPreviewUrls(
   itunesTracks: { trackName: string; previewUrl: string | null; appleMusicId: string | null }[],
 ) {
   const db = await getDb();
-  const albumTracks = db.select().from(tracks).where(eq(tracks.albumId, albumId)).all();
-  let wrote = false;
+  const albumTracks = (await db.select().from(tracks).where(eq(tracks.albumId, albumId)));
   for (const track of albumTracks) {
     const match = itunesTracks.find((item) => titlesMatch(item.trackName, track.title));
     if (!match) continue;
@@ -582,23 +532,20 @@ async function applyPreviewUrls(
     if (!track.previewUrl && match.previewUrl) updates.previewUrl = match.previewUrl;
     if (!track.appleMusicId && match.appleMusicId) updates.appleMusicId = match.appleMusicId;
     if (Object.keys(updates).length) {
-      db.update(tracks).set(updates).where(eq(tracks.id, track.id)).run();
-      wrote = true;
+      (await db.update(tracks).set(updates).where(eq(tracks.id, track.id)));
     }
   }
-  if (wrote) await persistLibrary();
 }
 
 async function linkMissingAlbumTabs(userId: string, albumId: string, artistName: string) {
   const db = await getDb();
-  const album = db
+  const album = (await db
     .select({ itunesCollectionId: albums.itunesCollectionId })
     .from(albums)
-    .where(eq(albums.id, albumId))
-    .get();
+    .where(eq(albums.id, albumId)).limit(1))[0];
   const collectionId = album?.itunesCollectionId ? Number(album.itunesCollectionId) : null;
 
-  const albumTracks = db
+  const albumTracks = (await db
     .select({
       id: tracks.id,
       title: tracks.title,
@@ -610,18 +557,16 @@ async function linkMissingAlbumTabs(userId: string, albumId: string, artistName:
       tabs,
       and(eq(tabs.trackId, tracks.id), eq(tabs.userId, userId), eq(tabs.instrument, "guitar")),
     )
-    .where(eq(tracks.albumId, albumId))
-    .all();
+    .where(eq(tracks.albumId, albumId)));
 
   const missing = albumTracks.filter((track) => !track.tabId);
   const added: { trackNumber: number }[] = [];
 
   for (const track of missing) {
-    const existing = db
+    const existing = (await db
       .select({ id: tabs.id })
       .from(tabs)
-      .where(and(eq(tabs.userId, userId), eq(tabs.trackId, track.id), eq(tabs.instrument, "guitar")))
-      .get();
+      .where(and(eq(tabs.userId, userId), eq(tabs.trackId, track.id), eq(tabs.instrument, "guitar"))).limit(1))[0];
     if (existing) continue;
     await ensureUserTab(userId, track.id, track.title, artistName, "guitar");
     added.push({ trackNumber: track.trackNumber });
@@ -638,4 +583,26 @@ async function linkMissingAlbumTabs(userId: string, albumId: string, artistName:
   }
 
   return added.length;
+}
+
+export async function deleteAlbumAction(albumId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const userId = await requireUserId();
+  try {
+    const db = await getDb();
+    const [album] = await db.select().from(albums).where(eq(albums.id, albumId)).limit(1);
+    if (!album) return { ok: false, error: "That album could not be found." };
+    // The catalog is shared. Delete only this authenticated user's saved parts.
+    await db.delete(tabs).where(and(
+      eq(tabs.userId, userId),
+      inArray(tabs.trackId, db.select({ id: tracks.id }).from(tracks).where(eq(tracks.albumId, album.id))),
+    ));
+    if (album.itunesCollectionId) await forgetShelfAlbum(Number(album.itunesCollectionId));
+    revalidatePath("/library");
+    revalidatePath(`/artist/${album.artistId}`);
+    revalidatePath(`/album/${album.id}`);
+    if (album.itunesCollectionId) revalidatePath(`/album/itunes-${album.itunesCollectionId}`);
+    return { ok: true };
+  } catch (error) {
+    return saveFailed(error, "Could not delete that album. Try again.");
+  }
 }

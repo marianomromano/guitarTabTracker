@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
-import { SESSION_COOKIE } from "@/lib/session";
+import { createClient } from "@/lib/supabase/server";
+import { isSameOrigin, requestOrigin } from "@/lib/safe-path";
 
 export async function POST(request: Request) {
-  const origin = request.headers.get("origin");
-  const base = origin && URL.canParse(origin) ? origin : new URL(request.url).origin;
-  const response = NextResponse.redirect(new URL("/", base), 303);
-  response.cookies.set(SESSION_COOKIE, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-    secure: process.env.VERCEL === "1",
-  });
+  if (!isSameOrigin(request)) return new Response("Invalid origin", { status: 403 });
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signOut();
+  if (error) return new Response("Could not sign out. Try again.", { status: 503 });
+  const response = NextResponse.redirect(new URL("/", requestOrigin(request)), 303);
+  for (const name of ["tabshelf_session", "tabshelf-demo-id", "tabshelf-shelf"]) response.cookies.delete(name);
   return response;
 }

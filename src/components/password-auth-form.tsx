@@ -48,14 +48,14 @@ export function PasswordAuthForm({
         {mode === "sign-in" ? (
           <>
             No account yet?{" "}
-            <Link href="/sign-up" className="text-gold underline-offset-4 hover:underline">
+            <Link href="/sign-up" className="text-primary underline-offset-4 hover:underline">
               Create one
             </Link>
           </>
         ) : (
           <>
             Already have an account?{" "}
-            <Link href="/sign-in" className="text-gold underline-offset-4 hover:underline">
+            <Link href="/sign-in" className="text-primary underline-offset-4 hover:underline">
               Sign in
             </Link>
           </>

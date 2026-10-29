@@ -1,96 +1,25 @@
 import { and, eq } from "drizzle-orm";
-import { cookies } from "next/headers";
 import { getDb } from "@/db";
 import { tabs } from "@/db/schema";
-import { persistLibrary } from "@/lib/library-persist";
-
-export const DEMO_COOKIE = "tabshelf-demo-id";
-const LOCAL_DEMO_VALUE = "local";
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-export function demoUserIdFromCookie(value: string | undefined) {
-  if (!value) return null;
-  if (value === LOCAL_DEMO_VALUE) return "local-dev";
-  if (UUID_RE.test(value)) return `demo:${value}`;
-  return null;
-}
+import { createClient } from "@/lib/supabase/server";
 
 export async function readDemoUserId() {
-  const jar = await cookies();
-  return demoUserIdFromCookie(jar.get(DEMO_COOKIE)?.value);
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.is_anonymous ? user.id : null;
 }
 
-export async function ensureDemoCookie() {
-  const jar = await cookies();
-  const current = jar.get(DEMO_COOKIE)?.value;
-  if (demoUserIdFromCookie(current)) {
-    return demoUserIdFromCookie(current)!;
-  }
-
-  const value = crypto.randomUUID();
-  jar.set(DEMO_COOKIE, value, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-    secure: process.env.VERCEL === "1",
-  });
-  return demoUserIdFromCookie(value)!;
-}
-
-export async function clearDemoCookie() {
-  const jar = await cookies();
-  jar.delete(DEMO_COOKIE);
-}
-
+// Called only with the source ID verified from the request's previous Auth session.
 export async function claimDemoTabs(signedInUserId: string, demoUserId: string) {
   if (signedInUserId === demoUserId) return 0;
-
   const db = await getDb();
-  const demoTabs = db.select().from(tabs).where(eq(tabs.userId, demoUserId)).all();
-  let claimed = 0;
-
-  for (const tab of demoTabs) {
-    const existing = db
-      .select({ id: tabs.id })
-      .from(tabs)
-      .where(
-        and(
-          eq(tabs.userId, signedInUserId),
-          eq(tabs.trackId, tab.trackId),
-          eq(tabs.instrument, tab.instrument),
-        ),
-      )
-      .get();
-
-    if (existing) continue;
-
-    db.insert(tabs)
-      .values({
-        id: crypto.randomUUID(),
-        userId: signedInUserId,
-        trackId: tab.trackId,
-        instrument: tab.instrument,
-        songsterrId: tab.songsterrId,
-        songsterrUrl: tab.songsterrUrl,
-        tabTex: tab.tabTex,
-        tabFile: tab.tabFile,
-        tabFilename: tab.tabFilename,
-        soundsliceHash: tab.soundsliceHash,
-        createdAt: tab.createdAt,
-      })
-      .run();
-    claimed += 1;
-  }
-
-  if (demoTabs.length > 0) {
-    db.delete(tabs).where(eq(tabs.userId, demoUserId)).run();
-  }
-
-  if (claimed + demoTabs.length > 0) {
-    await persistLibrary();
-  }
-
-  return claimed + demoTabs.length;
+  return db.transaction(async (tx) => {
+    const source = await tx.select().from(tabs).where(eq(tabs.userId, demoUserId));
+    for (const tab of source) {
+      await tx.insert(tabs).values({ ...tab, id: crypto.randomUUID(), userId: signedInUserId })
+        .onConflictDoNothing({ target: [tabs.userId, tabs.trackId, tabs.instrument] });
+    }
+    await tx.delete(tabs).where(and(eq(tabs.userId, demoUserId)));
+    return source.length;
+  });
 }

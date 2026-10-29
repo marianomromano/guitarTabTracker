@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronDown, Pause, Play } from "lucide-react";
+import { InstrumentSwitch, pickerSongFromTrack } from "@/components/instrument-switch";
+import { StrataCoreKitHint } from "@/components/strata-core-kit";
 import { Button } from "@/components/ui/button";
 import { usePlayer } from "@/components/player-provider";
 import { activeLyricIndex, type LyricsResult } from "@/lib/lyrics";
@@ -18,8 +20,10 @@ const lyricsCache = new Map<string, LyricsResult>();
 
 export function NowPlayingScreen({ onClose }: { onClose: () => void }) {
   const { track, playing, progress, duration, toggle, seek } = usePlayer();
-  const [lyrics, setLyrics] = useState<LyricsResult | null>(null);
-  const [loading, setLoading] = useState(true);
+  const key = track ? `${track.artist}::${track.title}` : "";
+  const [result, setResult] = useState<{ key: string; lyrics: LyricsResult } | null>(null);
+  const lyrics = (result?.key === key ? result.lyrics : lyricsCache.get(key)) ?? null;
+  const loading = Boolean(track) && !lyrics;
   const activeRef = useRef<HTMLParagraphElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
@@ -29,18 +33,10 @@ export function NowPlayingScreen({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (!track) return;
 
-    const key = `${track.artist}::${track.title}`;
-    const cached = lyricsCache.get(key);
-    if (cached) {
-      setLyrics(cached);
-      setLoading(false);
-      return;
-    }
+    if (lyricsCache.has(key)) return;
 
     const controller = new AbortController();
     let cancelled = false;
-    setLoading(true);
-    setLyrics(null);
     void fetch(
       `/api/lyrics?title=${encodeURIComponent(track.title)}&artist=${encodeURIComponent(track.artist)}`,
       { signal: controller.signal },
@@ -49,20 +45,18 @@ export function NowPlayingScreen({ onClose }: { onClose: () => void }) {
       .then((data: LyricsResult) => {
         if (cancelled) return;
         lyricsCache.set(key, data);
-        setLyrics(data);
-        setLoading(false);
+        setResult({ key, lyrics: data });
       })
       .catch((error: unknown) => {
         if (cancelled || (error instanceof DOMException && error.name === "AbortError")) return;
-        setLyrics({ instrumental: false, source: "none", lines: [] });
-        setLoading(false);
+        setResult({ key, lyrics: { instrumental: false, source: "none", lines: [] } });
       });
 
     return () => {
       cancelled = true;
       controller.abort();
     };
-  }, [track]);
+  }, [track, key]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -96,7 +90,7 @@ export function NowPlayingScreen({ onClose }: { onClose: () => void }) {
       role="dialog"
       aria-modal="true"
       aria-label="Now playing"
-      className="fixed inset-0 z-50 flex flex-col bg-[#12100c] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-0 z-[70] flex flex-col bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
     >
       <div className="flex shrink-0 items-center gap-3 px-4 py-3">
         <Button
@@ -109,7 +103,10 @@ export function NowPlayingScreen({ onClose }: { onClose: () => void }) {
         >
           <ChevronDown />
         </Button>
-        <p className="text-[11px] tracking-[0.28em] text-gold uppercase">Now playing</p>
+        <p className="text-[11px] tracking-[0.28em] text-primary uppercase">Now playing</p>
+        <div className="ml-auto">
+          <InstrumentSwitch song={pickerSongFromTrack(track)} active="drums" />
+        </div>
       </div>
 
       <div className="mx-auto grid min-h-0 w-full max-w-6xl flex-1 gap-6 overflow-hidden px-4 pb-6 md:grid-cols-[minmax(240px,0.85fr)_1.15fr]">
@@ -131,6 +128,7 @@ export function NowPlayingScreen({ onClose }: { onClose: () => void }) {
           <div className="min-w-0 text-center md:text-left">
             <h1 className="font-heading text-3xl text-pretty">{track.title}</h1>
             <p className="mt-1 text-lg text-muted-foreground">{track.artist}</p>
+            <div className="max-h-44 overflow-y-auto text-left"><StrataCoreKitHint artistName={track.artist} albumTitle={track.albumTitle} compact showFallback /></div>
           </div>
           <div>
             <input
@@ -162,7 +160,7 @@ export function NowPlayingScreen({ onClose }: { onClose: () => void }) {
 
         <div
           ref={scrollerRef}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-2xl bg-black/20 px-5 py-[30vh] ring-1 ring-white/10 md:px-8"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-2xl bg-card px-5 py-[30vh] ring-1 ring-border md:px-8"
         >
           {loading || !lyrics ? (
             <p className="text-center text-lg text-muted-foreground">Loading lyrics…</p>
@@ -177,9 +175,9 @@ export function NowPlayingScreen({ onClose }: { onClose: () => void }) {
                   "py-2 text-2xl leading-snug text-pretty transition-colors duration-300 md:text-3xl",
                   lyrics.source === "synced"
                     ? index === active
-                      ? "text-gold"
-                      : "text-white/30"
-                    : "text-zinc-100",
+                      ? "text-primary"
+                      : "text-muted-foreground/70"
+                    : "text-foreground",
                 )}
               >
                 {line.text || " "}

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Bookshelf } from "@/components/bookshelf";
-import { ClaimDemoOnMount } from "@/components/claim-demo";
 import { DemoBanner } from "@/components/demo-banner";
 import { LibraryFilter } from "@/components/library-filter";
 import { LibrarySongs } from "@/components/library-songs";
@@ -31,11 +30,10 @@ export default async function LibraryPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
-      {session.isSignedIn ? <ClaimDemoOnMount /> : null}
       {session.isDemo ? <DemoBanner /> : null}
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] tracking-[0.28em] text-gold uppercase">
+          <p className="text-[11px] tracking-[0.28em] text-primary uppercase">
             {session.isDemo ? "Demo shelf" : "Library"}
           </p>
           <LibraryFilter current={instrument} />
@@ -46,7 +44,7 @@ export default async function LibraryPage({
       </div>
 
       {empty ? (
-        <div className="rounded-2xl border border-dashed border-white/10 px-6 py-16 text-center">
+        <div className="rounded-2xl border border-dashed border-border px-6 py-16 text-center">
           <h2 className="text-xl">
             {instrument
               ? `No ${INSTRUMENT_LABEL[instrument].toLowerCase()} parts yet`

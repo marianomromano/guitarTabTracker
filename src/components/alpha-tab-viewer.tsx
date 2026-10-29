@@ -96,9 +96,9 @@ export function AlphaTabViewer({
   }, [fileBase64, tex]);
 
   return (
-    <div className="flex min-h-[22rem] flex-1 flex-col overflow-hidden rounded-2xl bg-black/25 ring-1 ring-white/10">
-      <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
-        <p className="text-[11px] tracking-[0.28em] text-gold uppercase">Embedded tab</p>
+    <div className="flex min-h-[22rem] flex-1 flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-border">
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <p className="text-[11px] tracking-[0.28em] text-primary uppercase">Embedded tab</p>
         <Button
           type="button"
           size="sm"

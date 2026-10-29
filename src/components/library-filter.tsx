@@ -22,7 +22,7 @@ export function LibraryFilter({ current }: { current?: Instrument }) {
             "inline-flex min-h-12 items-center rounded-full px-4 text-base",
             item.active
               ? "bg-gold text-black"
-              : "text-muted-foreground ring-1 ring-white/15 hover:text-foreground",
+              : "text-muted-foreground ring-1 ring-border hover:text-foreground",
           )}
         >
           {item.label}

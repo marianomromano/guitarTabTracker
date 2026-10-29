@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import { Pause, Play } from "lucide-react";
 import { MetronomeControls } from "@/components/metronome-controls";
@@ -25,8 +24,10 @@ export function NowPlaying() {
     musicAuthorized,
     toggle,
     seek,
+    nowPlayingOpen,
+    openNowPlaying,
+    closeNowPlaying,
   } = usePlayer();
-  const [expanded, setExpanded] = useState(false);
 
   const label = !track
     ? "Nothing playing"
@@ -40,13 +41,13 @@ export function NowPlaying() {
     <>
       <div
         data-now-playing
-        className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-white/10 bg-[#171410]/95 px-4 py-3 backdrop-blur-md md:bottom-0"
+        className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-md md:bottom-0"
       >
         <div className="mx-auto flex w-full max-w-3xl items-center gap-3">
           <button
             type="button"
             disabled={!track}
-            onClick={() => setExpanded(true)}
+            onClick={() => openNowPlaying()}
             className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left disabled:opacity-100"
             aria-label={track ? `Open ${track.title}` : undefined}
           >
@@ -100,7 +101,7 @@ export function NowPlaying() {
           {track ? <MetronomeControls /> : null}
         </div>
       </div>
-      {expanded && track ? <NowPlayingScreen onClose={() => setExpanded(false)} /> : null}
+      {nowPlayingOpen && track ? <NowPlayingScreen onClose={closeNowPlaying} /> : null}
     </>
   );
 }

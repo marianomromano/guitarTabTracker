@@ -26,7 +26,7 @@ export function AppleMusicConnect() {
         <Button
           type="button"
           variant="outline"
-          className="border-white/15"
+          className="border-border"
           onClick={() => void disconnectAppleMusic()}
         >
           Disconnect
@@ -40,7 +40,7 @@ export function AppleMusicConnect() {
       <Button
         type="button"
         variant="outline"
-        className="border-white/15"
+        className="border-border"
         disabled={busy}
         onClick={() => {
           setBusy(true);

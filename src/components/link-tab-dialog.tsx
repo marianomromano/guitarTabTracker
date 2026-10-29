@@ -34,7 +34,7 @@ export function LinkTabDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-[#171410] sm:max-w-lg">
+      <DialogContent className="max-w-lg bg-card sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Attach a tab</DialogTitle>
           <DialogDescription>
@@ -91,7 +91,7 @@ export function LinkTabDialog({
             onChange={(event) => setSliceUrl(event.target.value)}
             placeholder="Soundslice slice URL"
           />
-          <Button type="submit" variant="outline" disabled={pending} className="border-white/15">
+          <Button type="submit" variant="outline" disabled={pending} className="border-border">
             Embed Soundslice
           </Button>
         </form>

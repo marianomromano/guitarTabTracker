@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { PartButtons } from "@/components/part-buttons";
 import { PlayButton } from "@/components/play-button";
-import { itunesTabPath } from "@/lib/ids";
-import { primaryPart, type Instrument, type InstrumentParts } from "@/lib/instrument";
+import { SongInstrumentPicker, type PickerSong } from "@/components/song-instrument-picker";
+import { type Instrument, type InstrumentParts } from "@/lib/instrument";
 
 type TrackRow = {
   id: string;
@@ -19,21 +18,26 @@ type TrackRow = {
 export function TrackList({
   tracks,
   artistName,
+  albumTitle,
   artworkUrl,
   collectionId,
   returnTo = "/library",
 }: {
   tracks: TrackRow[];
   artistName: string;
+  albumTitle?: string;
   artworkUrl: string | null;
   collectionId?: string | null;
   returnTo?: string;
 }) {
   const [rows, setRows] = useState(tracks);
+  const [picked, setPicked] = useState<PickerSong | null>(null);
 
-  useEffect(() => {
+  const [previousInput, setPreviousInput] = useState(tracks);
+  if (previousInput !== tracks) {
+    setPreviousInput(tracks);
     setRows(tracks);
-  }, [tracks]);
+  }
 
   function markPart(trackId: string, instrument: Instrument, tabId: string | null) {
     setRows((current) =>
@@ -46,18 +50,12 @@ export function TrackList({
   }
 
   return (
-    <ol className="overflow-hidden rounded-xl ring-1 ring-white/10">
-      {rows.map((track) => {
-        const instrument = primaryPart(track.parts) ?? "guitar";
-        const tabHref = collectionId
-          ? itunesTabPath(Number(collectionId), track.trackNumber, instrument)
-          : track.parts[instrument]
-            ? `/tab/${track.parts[instrument]}`
-            : `/tab/${track.id}-${instrument}`;
-        return (
+    <>
+      <ol className="overflow-hidden rounded-xl ring-1 ring-border">
+        {rows.map((track) => (
           <li
             key={track.id}
-            className="flex items-stretch gap-1 border-b border-white/5 last:border-b-0"
+            className="flex items-stretch gap-1 border-b border-border last:border-b-0"
           >
             <div className="flex items-center py-1.5 pl-2">
               <PlayButton
@@ -65,21 +63,35 @@ export function TrackList({
                   id: track.id,
                   title: track.title,
                   artist: artistName,
+                  albumTitle,
                   artworkUrl,
                   previewUrl: track.previewUrl,
                   appleMusicId: track.appleMusicId,
                 }}
               />
             </div>
-            <Link
-              href={tabHref}
-              className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-3 py-3.5 text-sm text-zinc-100 transition active:bg-white/10 hover:bg-white/5"
+            <button
+              type="button"
+              onClick={() =>
+                setPicked({
+                  id: track.id,
+                  title: track.title,
+                  artist: artistName,
+                  albumTitle,
+                  artworkUrl,
+                  previewUrl: track.previewUrl,
+                  appleMusicId: track.appleMusicId,
+                  trackNumber: track.trackNumber,
+                  collectionId,
+                })
+              }
+              className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-3 py-3.5 text-left text-sm text-foreground transition active:bg-accent hover:bg-accent/50"
             >
               <span className="w-8 shrink-0 font-mono text-xs text-muted-foreground">
                 {String(track.trackNumber).padStart(2, "0")}
               </span>
               <span className="flex-1 truncate">{track.title}</span>
-            </Link>
+            </button>
             <div className="flex items-center pr-3">
               <PartButtons
                 trackId={track.id}
@@ -90,8 +102,9 @@ export function TrackList({
               />
             </div>
           </li>
-        );
-      })}
-    </ol>
+        ))}
+      </ol>
+      <SongInstrumentPicker song={picked} onClose={() => setPicked(null)} />
+    </>
   );
 }

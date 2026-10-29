@@ -100,3 +100,7 @@ async function writeShelf(parts: ShelfPart[]) {
     secure: process.env.VERCEL === "1",
   });
 }
+
+export async function forgetShelfAlbum(collectionId: number) {
+  await writeShelf((await readShelfParts()).filter(part => part.collectionId !== collectionId));
+}

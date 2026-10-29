@@ -17,10 +17,10 @@ export default async function SignUpPage({
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center px-4 py-16">
-      <p className="text-[11px] tracking-[0.28em] text-gold uppercase">Save your shelf</p>
+      <p className="text-[11px] tracking-[0.28em] text-primary uppercase">Save your shelf</p>
       <h1 className="font-heading mt-2 text-2xl">Create an account</h1>
       <p className="mt-2 mb-6 text-center text-sm text-muted-foreground">
-        Email and password only. No codes, no extra app.
+        Create an account with your email and password. We may ask you to confirm your email.
       </p>
       <PasswordAuthForm mode="sign-up" error={authErrorMessage(params.error)} />
     </div>

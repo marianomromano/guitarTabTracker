@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { StrataCoreKitHint } from "@/components/strata-core-kit";
 import { Button } from "@/components/ui/button";
 import { INSTRUMENT_LABEL, INSTRUMENTS } from "@/lib/instrument";
 import type { ItunesSongOption } from "@/lib/itunes";
@@ -10,6 +14,7 @@ export function AddTabButton({
   song: ItunesSongOption;
   returnTo: string;
 }) {
+  const [drumsSelected, setDrumsSelected] = useState(false);
   return (
     <form action="/api/add-tab" method="post" className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
       <input type="hidden" name="title" value={song.trackName} />
@@ -24,11 +29,12 @@ export function AddTabButton({
               name="instruments"
               value={instrument}
               defaultChecked={instrument === "guitar"}
+              onChange={event => { if (instrument === "drums") setDrumsSelected(event.target.checked); }}
               className="peer sr-only"
             />
             <span
               className={cn(
-                "inline-flex min-h-12 min-w-16 items-center justify-center rounded-lg px-3 text-base font-medium ring-1 ring-white/15 peer-checked:bg-gold peer-checked:text-black peer-checked:ring-gold",
+                "inline-flex min-h-12 min-w-16 items-center justify-center rounded-lg px-3 text-base font-medium ring-1 ring-border peer-checked:bg-gold peer-checked:text-black peer-checked:ring-gold",
               )}
             >
               {INSTRUMENT_LABEL[instrument]}
@@ -36,6 +42,7 @@ export function AddTabButton({
           </label>
         ))}
       </div>
+      {drumsSelected ? <StrataCoreKitHint artistName={song.artistName} albumTitle={song.collectionName} compact showFallback /> : null}
       <Button
         type="submit"
         className="h-12 w-full bg-gold px-5 text-base text-black hover:bg-gold/90 sm:w-auto"

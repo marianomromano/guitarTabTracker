@@ -2,12 +2,12 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { ChangeTabButton } from "@/components/change-tab-button";
-import { PartButtons } from "@/components/part-buttons";
+import { InstrumentSwitch } from "@/components/instrument-switch";
 import { PlayButton } from "@/components/play-button";
+import { StrataCoreKitHint } from "@/components/strata-core-kit";
 import { TabStage } from "@/components/tab-stage";
 import { resolveTrackMediaAction } from "@/app/actions";
 import { requireUserId } from "@/lib/auth";
-import { placeholderAlphaTex } from "@/lib/alphatex";
 import { INSTRUMENT_LABEL } from "@/lib/instrument";
 import { getTabForUser } from "@/lib/library";
 
@@ -48,20 +48,30 @@ export default async function TabPage({
           />
         ) : null}
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] tracking-[0.28em] text-gold uppercase">
+          <p className="text-[11px] tracking-[0.28em] text-primary uppercase">
             {INSTRUMENT_LABEL[tab.instrument]}
           </p>
           <h1 className="font-heading text-2xl sm:text-3xl">{tab.trackTitle}</h1>
           <p className="text-sm text-muted-foreground">
             {tab.artistName} · {tab.albumTitle}
           </p>
+          {tab.instrument === "drums" ? <StrataCoreKitHint artistName={tab.artistName} albumTitle={tab.albumTitle} compact showFallback /> : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <PartButtons
-            trackId={tab.trackId}
-            parts={tab.parts}
+          <InstrumentSwitch
+            song={{
+              id: tab.trackId,
+              title: tab.trackTitle,
+              artist: tab.artistName,
+              albumTitle: tab.albumTitle,
+              artworkUrl: tab.artworkUrl,
+              previewUrl: media?.previewUrl ?? tab.previewUrl,
+              appleMusicId: media?.appleMusicId ?? tab.appleMusicId,
+              trackNumber: tab.trackNumber,
+              collectionId: tab.itunesCollectionId,
+              tabId: tab.id,
+            }}
             active={tab.instrument}
-            returnTo={`/tab/${id}`}
           />
           <PlayButton
             size="lg"
@@ -69,6 +79,7 @@ export default async function TabPage({
               id: tab.trackId,
               title: tab.trackTitle,
               artist: tab.artistName,
+              albumTitle: tab.albumTitle,
               artworkUrl: tab.artworkUrl,
               previewUrl: media?.previewUrl ?? tab.previewUrl,
               appleMusicId: media?.appleMusicId ?? tab.appleMusicId,
@@ -87,10 +98,11 @@ export default async function TabPage({
         title={tab.trackTitle}
         artist={tab.artistName}
         instrument={tab.instrument}
-        tabTex={tab.tabTex ?? placeholderAlphaTex(tab.trackTitle, tab.artistName, tab.instrument)}
+        tabTex={tab.tabTex}
         tabFile={tab.tabFile}
         tabFilename={tab.tabFilename}
         soundsliceHash={tab.soundsliceHash}
+        songsterrUrl={tab.songsterrUrl}
       />
     </div>
   );

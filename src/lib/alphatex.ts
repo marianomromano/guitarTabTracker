@@ -35,6 +35,18 @@ export function placeholderAlphaTex(
 :4 r r r r | r r r r | r r r r | r r r r |`;
 }
 
+export function isProvidedTab(
+  tabFile: string | null | undefined,
+  tabTex: string | null | undefined,
+  title: string,
+  artist: string,
+  instrument: Instrument = "guitar",
+) {
+  if (tabFile) return true;
+  if (!tabTex?.trim()) return false;
+  return tabTex.trim() !== placeholderAlphaTex(title, artist, instrument).trim();
+}
+
 export function isAlphaTexFile(name: string) {
   return /\.(tex|alphatex|txt)$/i.test(name);
 }

@@ -23,7 +23,7 @@ export function SearchResults({
   const returnTo = `/search?q=${encodeURIComponent(query)}`;
 
   return (
-    <ul className="divide-y divide-white/5 overflow-hidden rounded-xl ring-1 ring-white/10">
+    <ul className="divide-y divide-border overflow-hidden rounded-xl ring-1 ring-border">
       {results.map((song) => (
         <li
           key={song.trackId}

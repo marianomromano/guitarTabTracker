@@ -54,8 +54,10 @@ export function useTuner(instrument: InstrumentPreset, lockedString: TunerString
   const instrumentRef = useRef(instrument);
   const lockedRef = useRef(lockedString);
 
-  instrumentRef.current = instrument;
-  lockedRef.current = lockedString;
+  useEffect(() => {
+    instrumentRef.current = instrument;
+    lockedRef.current = lockedString;
+  }, [instrument, lockedString]);
 
   const stop = useCallback(() => {
     cancelAnimationFrame(rafRef.current);

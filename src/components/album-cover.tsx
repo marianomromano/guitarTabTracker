@@ -31,7 +31,7 @@ export function AlbumCover({
       }
       className="group w-[148px] shrink-0 active:opacity-80 sm:w-[168px]"
     >
-      <div className="album-jacket relative aspect-square overflow-hidden rounded-sm bg-[#1a140f] shadow-[6px_10px_24px_rgba(0,0,0,0.45)] ring-1 ring-black/40 transition duration-200 group-hover:-translate-y-2 group-hover:shadow-[8px_18px_32px_rgba(0,0,0,0.55)]">
+      <div className="album-jacket relative aspect-square overflow-hidden rounded-sm bg-[#1a140f] shadow-[6px_10px_24px_rgba(70,45,20,0.22)] ring-1 ring-black/40 transition duration-200 group-hover:-translate-y-2 group-hover:shadow-[8px_18px_32px_rgba(70,45,20,0.3)]">
         {album.artworkUrl ? (
           <Image
             src={album.artworkUrl}
@@ -46,7 +46,7 @@ export function AlbumCover({
           </div>
         )}
       </div>
-      <p className="mt-2 truncate text-sm text-zinc-200">{title}</p>
+      <p className="mt-2 truncate text-sm text-foreground">{title}</p>
       <p className="truncate text-xs text-muted-foreground">{meta}</p>
     </Link>
   );

@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { PartButtons } from "@/components/part-buttons";
 import { PlayButton } from "@/components/play-button";
-import { partTabHref } from "@/lib/ids";
+import { SongInstrumentPicker, type PickerSong } from "@/components/song-instrument-picker";
+import { StrataCoreKitHint } from "@/components/strata-core-kit";
 import { emptyParts } from "@/lib/instrument";
 import type { LibrarySong } from "@/lib/library";
 
 export function LibrarySongs({ songs }: { songs: LibrarySong[] }) {
   const [hidden, setHidden] = useState<Record<string, true>>({});
+  const [picked, setPicked] = useState<PickerSong | null>(null);
   const groups = groupByArtist(songs.filter((song) => !hidden[song.tabId]));
 
   if (groups.length === 0) {
@@ -21,20 +22,17 @@ export function LibrarySongs({ songs }: { songs: LibrarySong[] }) {
     <div className="grid gap-8">
       {groups.map((group) => (
         <section key={group.artistName}>
-          <h2 className="mb-3 font-heading text-xl">{group.artistName}</h2>
-          <ol className="overflow-hidden rounded-xl ring-1 ring-white/10">
+          <div className="mb-3">
+            <h2 className="font-heading text-xl">{group.artistName}</h2>
+            <StrataCoreKitHint artistName={group.artistName} compact />
+          </div>
+          <ol className="overflow-hidden rounded-xl ring-1 ring-border">
             {group.songs.map((song) => {
-              const href = partTabHref(
-                song.itunesCollectionId,
-                song.trackNumber,
-                song.instrument,
-                song.tabId,
-              );
               const parts = { ...emptyParts(), [song.instrument]: song.tabId };
               return (
                 <li
                   key={song.tabId}
-                  className="flex items-stretch gap-1 border-b border-white/5 last:border-b-0"
+                  className="flex items-stretch gap-1 border-b border-border last:border-b-0"
                 >
                   <div className="flex items-center gap-3 py-2 pl-2">
                     {song.artworkUrl ? (
@@ -53,19 +51,34 @@ export function LibrarySongs({ songs }: { songs: LibrarySong[] }) {
                         id: song.trackId,
                         title: song.title,
                         artist: song.artistName,
+                        albumTitle: song.albumTitle,
                         artworkUrl: song.artworkUrl,
                         previewUrl: song.previewUrl,
                         appleMusicId: song.appleMusicId,
                       }}
                     />
                   </div>
-                  <Link
-                    href={href}
-                    className="flex min-h-16 min-w-0 flex-1 flex-col justify-center px-3 py-3 text-zinc-100 transition active:bg-white/10 hover:bg-white/5"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPicked({
+                        id: song.trackId,
+                        title: song.title,
+                        artist: song.artistName,
+                        albumTitle: song.albumTitle,
+                        artworkUrl: song.artworkUrl,
+                        previewUrl: song.previewUrl,
+                        appleMusicId: song.appleMusicId,
+                        trackNumber: song.trackNumber,
+                        collectionId: song.itunesCollectionId,
+                        tabId: song.tabId,
+                      })
+                    }
+                    className="flex min-h-16 min-w-0 flex-1 flex-col justify-center px-3 py-3 text-left text-foreground transition active:bg-accent hover:bg-accent/50"
                   >
                     <span className="truncate text-base font-medium">{song.title}</span>
                     <span className="truncate text-sm text-muted-foreground">{song.albumTitle}</span>
-                  </Link>
+                  </button>
                   <div className="flex items-center pr-3">
                     <PartButtons
                       trackId={song.trackId}
@@ -85,6 +98,7 @@ export function LibrarySongs({ songs }: { songs: LibrarySong[] }) {
           </ol>
         </section>
       ))}
+      <SongInstrumentPicker song={picked} onClose={() => setPicked(null)} />
     </div>
   );
 }

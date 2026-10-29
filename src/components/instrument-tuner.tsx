@@ -40,7 +40,7 @@ export function InstrumentTuner() {
             className={
               preset.id === instrument.id
                 ? "bg-gold text-black hover:bg-gold/90"
-                : "border-white/15"
+                : "border-border"
             }
             onClick={() => selectInstrument(preset.id)}
           >
@@ -50,18 +50,18 @@ export function InstrumentTuner() {
       </div>
 
       <div
-        className="mt-10 flex w-full flex-col items-center rounded-3xl border border-white/8 bg-black/25 px-5 py-10"
+        className="mt-10 flex w-full flex-col items-center rounded-3xl border border-border bg-card px-5 py-10"
         data-tuner-status={status}
         data-tuner-level={level.toFixed(4)}
         data-tuner-note={reading?.string.note ?? ""}
       >
-        <p className="text-[11px] tracking-[0.28em] text-gold uppercase">
+        <p className="text-[11px] tracking-[0.28em] text-primary uppercase">
           {listening ? "Listening" : "Ready"}
         </p>
         <p
           className={cn(
             "font-heading mt-3 text-7xl leading-none sm:text-8xl",
-            inTune ? "text-gold" : "text-foreground",
+            inTune ? "text-primary" : "text-foreground",
           )}
           aria-live="polite"
         >
@@ -77,25 +77,25 @@ export function InstrumentTuner() {
               : "Start the tuner, then pluck a string"}
         </p>
         <div
-          className="mt-5 h-1.5 w-40 overflow-hidden rounded-full bg-white/10"
+          className="mt-5 h-1.5 w-40 overflow-hidden rounded-full bg-muted"
           aria-hidden="true"
         >
           <div
             className={cn(
               "h-full rounded-full transition-[width,background-color] duration-75",
-              hearing ? "bg-gold" : "bg-white/35",
+              hearing ? "bg-gold" : "bg-muted-foreground/40",
             )}
             style={{ width: `${Math.min(100, level * 1400)}%` }}
           />
         </div>
 
         <div className="relative mt-8 h-16 w-full max-w-md">
-          <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-white/15" />
+          <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-border" />
           <div className="absolute top-1/2 left-1/2 h-8 w-px -translate-x-1/2 -translate-y-1/2 bg-gold" />
           <div
             className={cn(
               "absolute top-2 h-12 w-12 -translate-x-1/2 rounded-full border-2 transition-transform duration-75",
-              inTune ? "border-gold bg-gold/20" : "border-white/40 bg-[#171410]",
+              inTune ? "border-gold bg-gold/20" : "border-primary/50 bg-card",
             )}
             style={{ left: `${50 + needle}%` }}
           />
@@ -109,7 +109,7 @@ export function InstrumentTuner() {
         <p
           className={cn(
             "mt-6 text-sm font-medium",
-            reading ? (inTune ? "text-gold" : "text-foreground") : "text-muted-foreground",
+            reading ? (inTune ? "text-primary" : "text-foreground") : "text-muted-foreground",
           )}
         >
           {!reading
@@ -131,8 +131,8 @@ export function InstrumentTuner() {
               className={cn(
                 "min-h-16 rounded-xl border px-2 py-4 text-center transition active:scale-[0.98]",
                 active
-                  ? "border-gold bg-gold/15 text-gold"
-                  : "border-white/10 text-muted-foreground hover:border-white/25 hover:text-foreground",
+                  ? "border-gold bg-gold/15 text-primary"
+                  : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
               )}
             >
               <span className="block text-[10px] tracking-[0.2em] uppercase">
@@ -153,7 +153,7 @@ export function InstrumentTuner() {
             type="button"
             variant="outline"
             size="lg"
-            className="w-full border-white/15"
+            className="w-full border-border"
             onClick={stop}
           >
             <MicOff />

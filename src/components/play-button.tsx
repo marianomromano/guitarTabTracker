@@ -57,7 +57,7 @@ export function PlayButton({
         size={size === "lg" ? "lg" : "icon-lg"}
         variant={active ? "default" : "outline"}
         className={cn(
-          active ? "bg-gold text-black hover:bg-gold/90" : "border-white/15",
+          active ? "bg-gold text-black hover:bg-gold/90" : "border-border",
           size === "lg"
             ? "h-14 min-w-14 gap-2 px-5 text-base md:h-14 [&_svg]:size-6"
             : "size-14 rounded-full md:size-14 [&_svg]:size-7",

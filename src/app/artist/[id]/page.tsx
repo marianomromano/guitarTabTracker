@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AlbumCover } from "@/components/album-cover";
 import { BackLink } from "@/components/back-link";
+import { StrataCoreKitHint } from "@/components/strata-core-kit";
 import { requireUserId } from "@/lib/auth";
 import { getArtistLibrary } from "@/lib/library";
 
@@ -22,8 +23,11 @@ export default async function ArtistPage({
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
       <BackLink href="/library">Library</BackLink>
-      <p className="text-[11px] tracking-[0.28em] text-gold uppercase">Artist</p>
-      <h1 className="font-heading mt-1 mb-8 text-3xl">{artist.name}</h1>
+      <p className="text-[11px] tracking-[0.28em] text-primary uppercase">Artist</p>
+      <h1 className="font-heading mt-1 text-3xl">{artist.name}</h1>
+      <div className="mb-8">
+        <StrataCoreKitHint artistName={artist.name} />
+      </div>
       <div className="shelf">
         <div className="flex flex-wrap gap-x-5 gap-y-8 px-2 pt-4 pb-2">
           {artist.albums.map((album) => (

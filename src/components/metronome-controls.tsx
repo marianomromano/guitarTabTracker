@@ -30,7 +30,7 @@ export function MetronomeControls() {
         variant={enabled ? "default" : "outline"}
         className={cn(
           "size-11 rounded-full md:size-11",
-          enabled ? "bg-gold text-black hover:bg-gold/90" : "border-white/15",
+          enabled ? "bg-gold text-black hover:bg-gold/90" : "border-border",
         )}
         aria-pressed={enabled}
         aria-label={enabled ? "Turn metronome off" : "Turn metronome on"}
@@ -44,7 +44,7 @@ export function MetronomeControls() {
             type="button"
             size="icon-sm"
             variant="outline"
-            className="size-11 border-white/15 md:size-11"
+            className="size-11 border-border md:size-11"
             aria-label="Slow metronome by 5 BPM"
             onClick={() => nudge(-BPM_STEP)}
           >
@@ -53,7 +53,7 @@ export function MetronomeControls() {
           <span
             className={cn(
               "min-w-16 text-center font-mono text-sm tabular-nums",
-              pulse ? "text-gold" : "text-foreground",
+              pulse ? "text-primary" : "text-foreground",
             )}
           >
             {detecting && !bpm ? "…" : `${bpm ?? "—"} BPM`}
@@ -62,7 +62,7 @@ export function MetronomeControls() {
             type="button"
             size="icon-sm"
             variant="outline"
-            className="size-11 border-white/15 md:size-11"
+            className="size-11 border-border md:size-11"
             aria-label="Speed metronome by 5 BPM"
             onClick={() => nudge(BPM_STEP)}
           >
@@ -84,7 +84,7 @@ export function MetronomeControls() {
           <span
             aria-hidden
             className={cn(
-              "size-2.5 rounded-full bg-white/20 transition",
+              "size-2.5 rounded-full bg-border transition",
               pulse && "scale-125 bg-gold",
             )}
           />
